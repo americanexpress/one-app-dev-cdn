@@ -1,0 +1,21 @@
+# node & npm
+node_modules
+*.log
+
+# build
+lib
+*.tgz
+
+# test
+test-results
+.jest-cache
+# the below are generated during the tests and cleaned up in between tests
+# included here in case clean up fails
+.cache
+__tests__/stubs
+
+# OS
+.DS_Store
+
+# IDE
+.idea
