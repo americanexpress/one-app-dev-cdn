@@ -1,10 +1,9 @@
-<h1>
-  <center>
-    <br />
-    <img src="./one-app-dev-cdn.png" alt="one-app-dev-cdn - One App" width="50%" />
-    <br /><br />
-  </center>
+<h1 align="center">
+  <img src='https://github.com/americanexpress/one-app-dev-cdn/raw/master/one-app-dev-cdn.png' alt="One App Dev Proxy - One Amex" width='50%'/>
 </h1>
+
+[![npm](https://img.shields.io/npm/v/@americanexpress/one-app-dev-cdn)](https://www.npmjs.com/package/@americanexpress/one-app-dev-cdn)
+[![Travis (.org) branch](https://img.shields.io/travis/americanexpress/one-app-dev-cdn/master)](https://travis-ci.org/americanexpress/one-app-dev-cdn)
 
 > Building a local module and you want to load it? This supports loading of your remote and local modules together for local development.
 
