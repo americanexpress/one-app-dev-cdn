@@ -5,11 +5,11 @@
   "main": "lib/index.js",
   "contributors": [
     "Andres Escobar <Andres.Escobar@aexp.com> (https://github.com/anescobar1991)",
-    "James Singleton <James.Singleton1@aexp.com> https://github.com/JamesSingleton)",
+    "James Singleton <James.Singleton1@aexp.com> (https://github.com/JamesSingleton)",
     "Jimmy King  <Jimmy.King@aexp.com> (https://github.com/10xLaCroixDrinker)",
     "Jonathan Adshead <Jonathan.Adshead@aexp.com> (https://github.com/JAdshead)",
     "Michael Tobia <Michael.M.Tobia@aexp.com> (https://github.com/Francois-Esquire)",
-    "Michael Tomcal <Michael.A.Tomcal@aexp.com> (https://github.com/mtomcal))",
+    "Michael Tomcal <Michael.A.Tomcal@aexp.com> (https://github.com/mtomcal)",
     "Stephanie Coates  <Stephanie.Coates1@aexp.com> (https://github.com/stephaniecoates)",
     "Nelly Kiboi <Nelly.J.Kiboi@aexp.com> (https://github.com/nellyk)",
     "Nickolas Oliver <nickolas.oliver@aexp.com> (https://github.com/PixnBits)"
@@ -19,10 +19,12 @@
     "test:lint": "eslint --ignore-path .eslintignore --ext .js,.snap .",
     "test:unit": "jest",
     "test": "npm run test:unit && npm run test:lint",
+    "test:lockfile": "lockfile-lint -p package-lock.json -t npm -a npm -o https: -c -i",
     "build": "babel src --out-dir lib",
     "clean": "rimraf lib",
     "prebuild": "npm run clean",
-    "prepack": "npm run test && npm run build"
+    "prepack": "npm run test && npm run build",
+    "posttest": "npm run test:lockfile"
   },
   "keywords": [
     "local development",
@@ -67,6 +69,7 @@
     "express": "^4.14.1",
     "husky": "^3.0.9",
     "jest": "^23.6.0",
+    "lockfile-lint": "^3.0.8",
     "mkdirp": "^0.5.1",
     "semantic-release": "^15.13.31",
     "supertest": "^3.0.0"
