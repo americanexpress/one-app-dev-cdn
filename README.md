@@ -19,7 +19,6 @@ Want to get paid for your contributions to `one-app-dev-cdn`?
 * [Features](#-features)
 * [Usage](#-usage)
 * [API](#-api)
-* [Available Scripts](#-available-scripts)
 * [Contributing](#-contributing)
 
 ## ✨ Features
@@ -90,16 +89,6 @@ Whether to use modules from `localDevPublicPath`. Passed as `true` or `false`, d
 **Note**: Either `remoteModuleMapUrl` OR `useLocalModules` is required. If both are provided then
 the remote module map will be merged with modules from `localDevPublicPath` with the local modules
 taking precedence.
-
-## 📜 Available Scripts
-
-**`npm run build`**
-
-Builds the module into the `build` folder.
-
-**`npm test`**
-
-Runs `eslint` **and** unit tests on the current branch.
 
 ## 🏆 Contributing
 
