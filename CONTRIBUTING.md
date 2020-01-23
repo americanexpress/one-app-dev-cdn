@@ -2,9 +2,18 @@
 
 ✨ Thank you for taking the time to contribute to this project ✨
 
+## 📖 Table of Contents
+
+* [Code of Conduct](#code-of-conduct)
+* [Developing](#developing)
+* [Submitting a new feature](#submitting-a-new-feature)
+* [Reporting bugs](#reporting-bugs)
+* [Contributing](#getting-in-contact)
+* [Coding conventions](#coding-conventions)
+
 ## Code of Conduct
 
-This project adheres to the American Express [Code of Conduct](https://github.com/americanexpress/one-app-dev-cdn/blob/master/CODE_OF_CONDUCT.md). By contributing, you are expected to honor these guidelines.
+This project adheres to the American Express [Code of Conduct](./CODE_OF_CONDUCT.md). By contributing, you are expected to honor these guidelines.
 
 ## Developing
 
@@ -104,7 +113,7 @@ Please review our [Security Policy](./SECURITY.md). Please follow the instructio
 
 ## Getting in contact
 
-  - Join our [Slack channel](http://one-amex.slack.com) request an invite [here](https://join.slack.com/t/one-amex/shared_invite/enQtOTA0MzEzODExODEwLTlmYzI1Y2U2ZDEwNWJjOTAxYTlmZTYzMjUyNzQyZTdmMWIwZGJmZDM2MDZmYzVjMDk5OWU4OGIwNjJjZWRhMjY)
+- Join our [Slack channel](http://one-amex.slack.com) request an invite [here](https://join.slack.com/t/one-amex/shared_invite/enQtOTA0MzEzODExODEwLTlmYzI1Y2U2ZDEwNWJjOTAxYTlmZTYzMjUyNzQyZTdmMWIwZGJmZDM2MDZmYzVjMDk5OWU4OGIwNjJjZWRhMjY)
 
 ## Coding conventions
 
