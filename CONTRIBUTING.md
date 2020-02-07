@@ -39,27 +39,27 @@ This project adheres to the American Express [Code of Conduct](./CODE_OF_CONDUCT
 
 #### Running and cleaning the build files
 
-`npm run build`
+- **`npm run build`**
 
 Builds the module into the `lib` folder.
 
-`npm run clean`
+- **`npm run clean`**
 
 This removes any existing files generated during the build process and ensures that any new build is clean.
 
 #### Running tests
 
-`npm test`
+- **`npm test`**
 
 Runs `eslint` **and** unit tests on the current branch.
 
-`npm posttest`
+- **`npm posttest`**
 
 Runs linting on the current branch and checks that the commits follow [conventional commits](https://www.conventionalcommits.org/)
 
 ## Submitting a new feature
 
-When submitting a new feature request or enhancement of an existing features please review the following:-
+When submitting a new feature request or enhancement of an existing features please review the following:
 
 ### Is your feature request related to a problem
 
@@ -102,7 +102,6 @@ If applicable, add screenshots or animated GIFs to help explain your problem.
 
 Provide the system information which is not limited to the below:
 
-- OS: [e.g. macOS, Windows]
 - Browser (if applies) [e.g. chrome, safari]
 - Version of one-app-dev-cdn: [e.g. 5.0.0]
 - Node version:[e.g 10.15.1]
