@@ -89,7 +89,7 @@ export default ({
     ],
   }));
 
-  const remoteModuleBaseUrls = [];
+  let remoteModuleBaseUrls = [];
   // support one-app-cli's "serve-module"
   // merge local with remote, with local taking preference
   oneAppDevCdn.get('/module-map.json', (req, response) => {
@@ -99,6 +99,10 @@ export default ({
           agent: new ProxyAgent(),
         }).then(
           (r) => {
+            // clear out remoteModuleBaseUrls as the new module map now has different urls in it
+            // not clearing would result in an ever growing array
+            remoteModuleBaseUrls = [];
+
             const remoteModuleMap = JSON.parse(r.body);
 
             const { modules } = remoteModuleMap;
