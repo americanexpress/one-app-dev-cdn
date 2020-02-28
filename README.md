@@ -25,6 +25,7 @@ Want to get paid for your contributions to `one-app-dev-cdn`?
 
 * Loads and serves local module map.
 * Loads, serves, and merges remote module map with local module map.
+* Acts as a proxy to modules defined in the remote module map.
 
 ## 🤹‍ Usage
 
@@ -89,6 +90,13 @@ Whether to use modules from `localDevPublicPath`. Passed as `true` or `false`, d
 **Note**: Either `remoteModuleMapUrl` OR `useLocalModules` is required. If both are provided then
 the remote module map will be merged with modules from `localDevPublicPath` with the local modules
 taking precedence.
+
+### Proxy Support
+
+`one-app-dev-cdn` respects the `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` environment variables.
+
+Make use of these environment variables if the remote module map or modules you want to use are
+inaccessible without the use of a proxy server.
 
 ## 🏆 Contributing
 

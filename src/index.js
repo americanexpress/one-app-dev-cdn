@@ -26,6 +26,7 @@ import got from 'got';
 import compression from 'compression';
 import cors from 'cors';
 import ip from 'ip';
+import ProxyAgent from 'proxy-agent';
 
 const readFile = promisify(fs.readFile);
 
@@ -38,6 +39,17 @@ const getLocalModuleMap = async ({ pathToModulemap, oneAppDevCdnAddress }) => {
     module.node.url = module.node.url.replace('[one-app-dev-cdn-url]', oneAppDevCdnAddress);
   });
   return JSON.stringify(moduleMap, null, 2);
+};
+
+// disabling bc auto-fixing this rule causes a line longer than 100 chars so the rules conflict
+// eslint-disable-next-line arrow-body-style
+const matchPathToKnownRemoteModuleUrl = (incomingRequestPath, remoteModuleBaseUrls) => {
+  return remoteModuleBaseUrls.find((remoteModuleBaseUrl) => {
+    const remoteModuleUrlOrigin = new URL(remoteModuleBaseUrl).origin;
+    const remoteModulePath = remoteModuleBaseUrl.replace(remoteModuleUrlOrigin, '');
+
+    return incomingRequestPath.startsWith(remoteModulePath);
+  });
 };
 
 export default ({
@@ -77,13 +89,48 @@ export default ({
     ],
   }));
 
+  let remoteModuleBaseUrls = [];
   // support one-app-cli's "serve-module"
   // merge local with remote, with local taking preference
   oneAppDevCdn.get('/module-map.json', (req, response) => {
     settle([
       remoteModuleMapUrl
-        ? got(remoteModuleMapUrl).then(
-          r => JSON.parse(r.body),
+        ? got(remoteModuleMapUrl, {
+          agent: new ProxyAgent(),
+        }).then(
+          (r) => {
+            // clear out remoteModuleBaseUrls as the new module map now has different urls in it
+            // not clearing would result in an ever growing array
+            remoteModuleBaseUrls = [];
+
+            const remoteModuleMap = JSON.parse(r.body);
+
+            const { modules } = remoteModuleMap;
+            const oneAppDevStaticsAddress = `http://${req.headers.host}/static`;
+
+            Object.keys(modules).forEach((moduleName) => {
+              const module = modules[moduleName];
+
+              const parsedBundlePath = path.parse(module.node.url, '');
+
+              // store urls for later lookup when module requests are caught by one-app-dev-cdn
+              remoteModuleBaseUrls.push(
+                module.node.url.replace(parsedBundlePath.base, '')
+              );
+
+              // override remote module map to point all module URLs to one-app-dev-cdn
+              module.node.url = module.node.url.replace(
+                new URL(module.node.url).origin, oneAppDevStaticsAddress
+              );
+              module.legacyBrowser.url = module.legacyBrowser.url.replace(
+                new URL(module.legacyBrowser.url).origin, oneAppDevStaticsAddress
+              );
+              module.browser.url = module.browser.url.replace(
+                new URL(module.browser.url).origin, oneAppDevStaticsAddress
+              );
+            });
+            return remoteModuleMap;
+          },
           (error) => {
             console.warn(
               `one-app-dev-cdn error loading module map from ${remoteModuleMapUrl}: ${error}`
@@ -118,6 +165,37 @@ export default ({
 
   // for locally served modules
   oneAppDevCdn.use('/modules', express.static(`${localDevPublicPath}/modules`));
+
+  // eslint-disable-next-line consistent-return
+  oneAppDevCdn.get('*', (req, res) => {
+    const incomingRequestPath = req.path;
+
+    if (matchPathToKnownRemoteModuleUrl(incomingRequestPath, remoteModuleBaseUrls)) {
+      const knownRemoteModuleBaseUrl = matchPathToKnownRemoteModuleUrl(
+        incomingRequestPath,
+        remoteModuleBaseUrls
+      );
+      const remoteModuleBaseUrlOrigin = new URL(knownRemoteModuleBaseUrl).origin;
+      got(`${remoteModuleBaseUrlOrigin}/${req.path}`, {
+        headers: { connection: 'keep-alive' },
+        agent: new ProxyAgent(),
+      })
+        .then(remoteModuleResponse => remoteModuleResponse.body)
+        .then(
+          remoteModuleResponse => res
+            .status(200)
+            .type(path.extname(req.path))
+            .send(remoteModuleResponse),
+          err => res
+            .status(500)
+            .send(err.message)
+        );
+    } else {
+      return res
+        .status(404)
+        .send('Not found');
+    }
+  });
 
   return oneAppDevCdn;
 };
