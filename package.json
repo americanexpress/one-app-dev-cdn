@@ -18,7 +18,8 @@
   "scripts": {
     "test:lint": "eslint --ignore-path .eslintignore --ext .js,.snap .",
     "test:unit": "jest",
-    "test": "npm run test:unit && npm run test:lint",
+    "test": "npm run test:unit && npm run test:lint && npm run test:git-history",
+    "test:git-history": "commitlint --from origin/master --to HEAD",
     "test:lockfile": "lockfile-lint -p package-lock.json -t npm -a npm -o https: -c -i",
     "build": "babel src --out-dir lib",
     "clean": "rimraf lib",
