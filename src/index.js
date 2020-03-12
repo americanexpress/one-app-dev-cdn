@@ -106,7 +106,7 @@ export default ({
             const remoteModuleMap = JSON.parse(r.body);
 
             const { modules } = remoteModuleMap;
-            const oneAppDevStaticsAddress = `http://${req.headers.host}/static`;
+            const oneAppDevStaticsAddress = `http://localhost:${process.env.HTTP_ONE_APP_DEV_CDN_PORT}/static`;
 
             Object.keys(modules).forEach((moduleName) => {
               const module = modules[moduleName];
@@ -141,7 +141,7 @@ export default ({
         : {},
       (useLocalModules ? getLocalModuleMap({
         pathToModulemap: path.join(localDevPublicPath, 'module-map.json'),
-        oneAppDevCdnAddress: `http://${req.headers.host}`,
+        oneAppDevCdnAddress: `http://localhost:${process.env.HTTP_ONE_APP_DEV_CDN_PORT}`,
       })
         .then(JSON.parse) : {}),
     ])
