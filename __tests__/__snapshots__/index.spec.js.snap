@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`one-app-dev-cdn module-map.json extends the remote map with the local map 1`] = `"{\\"key\\":\\"not-used-in-development\\",\\"modules\\":{\\"module-b\\":{\\"node\\":{\\"url\\":\\"http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.node.js\\",\\"integrity\\":\\"123\\"},\\"browser\\":{\\"url\\":\\"http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.browser.js\\",\\"integrity\\":\\"234\\"},\\"legacyBrowser\\":{\\"url\\":\\"http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.legacy.browser.js\\",\\"integrity\\":\\"345\\"}},\\"module-a\\":{\\"node\\":{\\"url\\":\\"https://example.com/cdn/module-a/1.0.0/module-a.node.js\\",\\"integrity\\":\\"123\\"},\\"browser\\":{\\"url\\":\\"https://example.com/cdn/module-a/1.0.0/module-a.browser.js\\",\\"integrity\\":\\"234\\"},\\"legacyBrowser\\":{\\"url\\":\\"https://example.com/cdn/module-a/1.0.0/module-a.legacy.browser.js\\",\\"integrity\\":\\"345\\"}}}}"`;
+exports[`one-app-dev-cdn module-map.json extends the remote map with the local map 1`] = `"{\\"key\\":\\"not-used-in-development\\",\\"modules\\":{\\"module-b\\":{\\"node\\":{\\"url\\":\\"http://localhost:3001/static/cdn/module-b/1.0.0/module-b.node.js\\",\\"integrity\\":\\"123\\"},\\"browser\\":{\\"url\\":\\"http://localhost:3001/static/cdn/module-b/1.0.0/module-b.browser.js\\",\\"integrity\\":\\"234\\"},\\"legacyBrowser\\":{\\"url\\":\\"http://localhost:3001/static/cdn/module-b/1.0.0/module-b.legacy.browser.js\\",\\"integrity\\":\\"345\\"}},\\"module-a\\":{\\"node\\":{\\"url\\":\\"https://example.com/cdn/module-a/1.0.0/module-a.node.js\\",\\"integrity\\":\\"123\\"},\\"browser\\":{\\"url\\":\\"https://example.com/cdn/module-a/1.0.0/module-a.browser.js\\",\\"integrity\\":\\"234\\"},\\"legacyBrowser\\":{\\"url\\":\\"https://example.com/cdn/module-a/1.0.0/module-a.legacy.browser.js\\",\\"integrity\\":\\"345\\"}}}}"`;
 
 exports[`one-app-dev-cdn module-map.json uses the local map overriding the cdn url placeholder with the one-app-dev-cdn url 1`] = `
 Object {
@@ -24,7 +24,7 @@ Object {
 }
 `;
 
-exports[`one-app-dev-cdn modules gets remote modules: module map response 1`] = `"{\\"key\\":\\"not-used-in-development\\",\\"modules\\":{\\"module-b\\":{\\"node\\":{\\"url\\":\\"http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.node.js\\",\\"integrity\\":\\"123\\"},\\"browser\\":{\\"url\\":\\"http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.browser.js\\",\\"integrity\\":\\"234\\"},\\"legacyBrowser\\":{\\"url\\":\\"http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.legacy.browser.js\\",\\"integrity\\":\\"345\\"}}}}"`;
+exports[`one-app-dev-cdn modules gets remote modules: module map response 1`] = `"{\\"key\\":\\"not-used-in-development\\",\\"modules\\":{\\"module-b\\":{\\"node\\":{\\"url\\":\\"http://localhost:3001/static/cdn/module-b/1.0.0/module-b.node.js\\",\\"integrity\\":\\"123\\"},\\"browser\\":{\\"url\\":\\"http://localhost:3001/static/cdn/module-b/1.0.0/module-b.browser.js\\",\\"integrity\\":\\"234\\"},\\"legacyBrowser\\":{\\"url\\":\\"http://localhost:3001/static/cdn/module-b/1.0.0/module-b.legacy.browser.js\\",\\"integrity\\":\\"345\\"}}}}"`;
 
 exports[`one-app-dev-cdn modules gets remote modules: module response 1`] = `
 Array [
@@ -62,7 +62,7 @@ Array [
 ]
 `;
 
-exports[`one-app-dev-cdn modules returns a 404 if a request for something not known as a module from the module map comes in: module map response 1`] = `"{\\"key\\":\\"not-used-in-development\\",\\"modules\\":{\\"module-b\\":{\\"node\\":{\\"url\\":\\"http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.node.js\\",\\"integrity\\":\\"123\\"},\\"browser\\":{\\"url\\":\\"http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.browser.js\\",\\"integrity\\":\\"234\\"},\\"legacyBrowser\\":{\\"url\\":\\"http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.legacy.browser.js\\",\\"integrity\\":\\"345\\"}}}}"`;
+exports[`one-app-dev-cdn modules returns a 404 if a request for something not known as a module from the module map comes in: module map response 1`] = `"{\\"key\\":\\"not-used-in-development\\",\\"modules\\":{\\"module-b\\":{\\"node\\":{\\"url\\":\\"http://localhost:3001/static/cdn/module-b/1.0.0/module-b.node.js\\",\\"integrity\\":\\"123\\"},\\"browser\\":{\\"url\\":\\"http://localhost:3001/static/cdn/module-b/1.0.0/module-b.browser.js\\",\\"integrity\\":\\"234\\"},\\"legacyBrowser\\":{\\"url\\":\\"http://localhost:3001/static/cdn/module-b/1.0.0/module-b.legacy.browser.js\\",\\"integrity\\":\\"345\\"}}}}"`;
 
 exports[`one-app-dev-cdn modules returns a 404 if a request for something not known as a module from the module map comes in: remote calls from got 1`] = `
 Array [
@@ -83,7 +83,7 @@ Array [
 ]
 `;
 
-exports[`one-app-dev-cdn modules returns a 500 if a request to proxy a module from the module map fails: module map response 1`] = `"{\\"key\\":\\"not-used-in-development\\",\\"modules\\":{\\"module-b\\":{\\"node\\":{\\"url\\":\\"http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.node.js\\",\\"integrity\\":\\"123\\"},\\"browser\\":{\\"url\\":\\"http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.browser.js\\",\\"integrity\\":\\"234\\"},\\"legacyBrowser\\":{\\"url\\":\\"http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.legacy.browser.js\\",\\"integrity\\":\\"345\\"}}}}"`;
+exports[`one-app-dev-cdn modules returns a 500 if a request to proxy a module from the module map fails: module map response 1`] = `"{\\"key\\":\\"not-used-in-development\\",\\"modules\\":{\\"module-b\\":{\\"node\\":{\\"url\\":\\"http://localhost:3001/static/cdn/module-b/1.0.0/module-b.node.js\\",\\"integrity\\":\\"123\\"},\\"browser\\":{\\"url\\":\\"http://localhost:3001/static/cdn/module-b/1.0.0/module-b.browser.js\\",\\"integrity\\":\\"234\\"},\\"legacyBrowser\\":{\\"url\\":\\"http://localhost:3001/static/cdn/module-b/1.0.0/module-b.legacy.browser.js\\",\\"integrity\\":\\"345\\"}}}}"`;
 
 exports[`one-app-dev-cdn modules returns a 500 if a request to proxy a module from the module map fails: remote calls from got 1`] = `
 Array [

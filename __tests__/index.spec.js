@@ -122,8 +122,10 @@ describe('one-app-dev-cdn', () => {
 
   const sanitizeModuleMapForSnapshot = moduleMapString => moduleMapString.replace(
     /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,8}/g,
-    '0.0.0.0:3001'
+    'localhost:3001'
   );
+
+  process.env.HTTP_ONE_APP_DEV_CDN_PORT = 3001;
 
   beforeEach(() => {
     jest
@@ -271,15 +273,15 @@ describe('one-app-dev-cdn', () => {
         modules: {
           'module-b': {
             node: {
-              url: 'http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.node.js',
+              url: 'http://localhost:3001/static/cdn/module-b/1.0.0/module-b.node.js',
               integrity: '123',
             },
             browser: {
-              url: 'http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.browser.js',
+              url: 'http://localhost:3001/static/cdn/module-b/1.0.0/module-b.browser.js',
               integrity: '234',
             },
             legacyBrowser: {
-              url: 'http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.legacy.browser.js',
+              url: 'http://localhost:3001/static/cdn/module-b/1.0.0/module-b.legacy.browser.js',
               integrity: '345',
             },
           },
@@ -334,7 +336,7 @@ describe('one-app-dev-cdn', () => {
             JSON.stringify({
               ...defaultRemoteMap,
               key: 'not-used-in-development',
-            }).replace(/https:\/\/example.com\//g, 'http://0.0.0.0:3001/static/')
+            }).replace(/https:\/\/example.com\//g, 'http://localhost:3001/static/')
           );
           expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
         });
