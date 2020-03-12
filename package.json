@@ -1,6 +1,6 @@
 {
   "name": "@americanexpress/one-app-dev-cdn",
-  "version": "3.0.0",
+  "version": "3.2.0",
   "description": "Load remote modules for local development",
   "main": "lib/index.js",
   "contributors": [
