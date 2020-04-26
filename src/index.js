@@ -16,7 +16,6 @@
 
 // native
 import path from 'path';
-import { promisify } from 'util';
 import fs from 'fs';
 
 // dependencies
@@ -28,10 +27,8 @@ import cors from 'cors';
 import ip from 'ip';
 import ProxyAgent from 'proxy-agent';
 
-const readFile = promisify(fs.readFile);
-
-const getLocalModuleMap = async ({ pathToModulemap, oneAppDevCdnAddress }) => {
-  const moduleMap = JSON.parse(await readFile(pathToModulemap, 'utf8'));
+const getLocalModuleMap = ({ pathToModulemap, oneAppDevCdnAddress }) => {
+  const moduleMap = JSON.parse(fs.readFileSync(pathToModulemap, 'utf8').toString());
   Object.keys(moduleMap.modules).forEach((moduleName) => {
     const module = moduleMap.modules[moduleName];
     module.browser.url = module.browser.url.replace('[one-app-dev-cdn-url]', oneAppDevCdnAddress);
@@ -139,11 +136,10 @@ export default ({
           }
         )
         : {},
-      (useLocalModules ? getLocalModuleMap({
+      (useLocalModules ? JSON.parse(getLocalModuleMap({
         pathToModulemap: path.join(localDevPublicPath, 'module-map.json'),
         oneAppDevCdnAddress: `http://localhost:${process.env.HTTP_ONE_APP_DEV_CDN_PORT}`,
-      })
-        .then(JSON.parse) : {}),
+      })) : {}),
     ])
       .then(([remoteMap, localMap]) => {
         const map = {

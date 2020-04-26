@@ -36,12 +36,6 @@
     "type": "git",
     "url": "https://github.com/americanexpress/one-app-dev-cdn.git"
   },
-  "jest": {
-    "preset": "amex-jest-preset",
-    "coveragePathIgnorePatterns": [
-      "<rootDir>/commitlint.config.js"
-    ]
-  },
   "dependencies": {
     "compression": "^1.7.4",
     "cors": "^2.8.4",
@@ -49,13 +43,14 @@
     "got": "^6.7.1",
     "ip": "^1.1.5",
     "promise-settle": "^0.3.0",
-    "proxy-agent": "^3.1.1",
-    "rimraf": "^2.5.2"
+    "proxy-agent": "^3.1.1"
   },
   "peerDependencies": {
     "express": "^4.0.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.8.4",
+    "@babel/polyfill": "^7.8.7",
     "@commitlint/cli": "^8.2.0",
     "@commitlint/config-conventional": "^8.2.0",
     "@semantic-release/changelog": "^3.0.5",
@@ -63,16 +58,16 @@
     "@semantic-release/git": "^7.0.18",
     "@semantic-release/npm": "^5.3.4",
     "@semantic-release/release-notes-generator": "^7.3.2",
-    "amex-jest-preset": "^5.0.0",
-    "babel-cli": "^6.18.0",
-    "babel-preset-amex": "^1.0.1",
+    "amex-jest-preset": "^6.0.1",
+    "babel-preset-amex": "^3.3.0",
     "eslint": "^5.0.0",
     "eslint-config-amex": "^9.0.0",
     "express": "^4.14.1",
     "husky": "^3.0.9",
-    "jest": "^23.6.0",
+    "jest": "^25.4.0",
     "lockfile-lint": "^4.1.0",
     "mkdirp": "^0.5.1",
+    "rimraf": "^2.5.2",
     "semantic-release": "^15.13.31",
     "supertest": "^3.0.0"
   },
