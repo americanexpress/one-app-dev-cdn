@@ -1,9 +1,0 @@
-src
-*.tgz
-__tests__
-__mocks__
-.babelrc
-.jest-cache
-test-results
-.eslintignore
-.eslintrc.json
