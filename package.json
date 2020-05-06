@@ -15,6 +15,9 @@
     "Nickolas Oliver <nickolas.oliver@aexp.com> (https://github.com/PixnBits)"
   ],
   "license": "Apache-2.0",
+  "files": [
+    "lib"
+  ],
   "scripts": {
     "test:lint": "eslint --ignore-path .eslintignore --ext .js,.snap .",
     "test:unit": "jest",
