@@ -1,3 +1,10 @@
+## [3.2.1](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.2.0...v3.2.1) (2020-05-06)
+
+
+### Bug Fixes
+
+* **package-content:** isolated to lib ([e49ecad](https://github.com/americanexpress/one-app-dev-cdn/commit/e49ecad3c8bf982e3ffc151c0e4ba0524f58b636))
+
 # [3.2.0](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.1.0...v3.2.0) (2020-03-12)
 
 
