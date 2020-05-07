@@ -108,6 +108,7 @@ describe('one-app-dev-cdn', () => {
     useLocalModules,
     remoteModuleMapUrl,
     appPort,
+    useHost,
   } = {}) => {
     process.env.NODE_ENV = nodeEnv;
 
@@ -117,12 +118,13 @@ describe('one-app-dev-cdn', () => {
       remoteModuleMapUrl,
       useLocalModules,
       appPort,
+      useHost,
     });
   };
 
   const sanitizeModuleMapForSnapshot = moduleMapString => moduleMapString.replace(
     /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,8}/g,
-    'localhost:3001'
+    '0.0.0.0:3001'
   );
 
   process.env.HTTP_ONE_APP_DEV_CDN_PORT = 3001;
@@ -292,6 +294,43 @@ describe('one-app-dev-cdn', () => {
         .then((response) => {
           expect(response.status).toBe(200);
           expect(response.header['content-type']).toMatch(/^application\/json/);
+          expect(response.text).toEqual(JSON.stringify(modifiedRemoteMap));
+          expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
+        });
+    });
+
+    it('modifies the key property and the module URLs using the req.host instead of localhost', () => {
+      expect.assertions(4);
+      const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
+      const fcdn = setupTest({
+        appPort: 3000, useLocalModules: false, remoteModuleMapUrl, useHost: true,
+      });
+      got.mockReturnJsonOnce(defaultRemoteMap);
+
+      const modifiedRemoteMap = {
+        key: 'not-used-in-development',
+        modules: {
+          'module-b': {
+            node: {
+              url: 'http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.node.js',
+              integrity: '123',
+            },
+            browser: {
+              url: 'http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.browser.js',
+              integrity: '234',
+            },
+            legacyBrowser: {
+              url: 'http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.legacy.browser.js',
+              integrity: '345',
+            },
+          },
+        },
+      };
+      return supertest(fcdn)
+        .get('/module-map.json')
+        .then((response) => {
+          expect(response.status).toBe(200);
+          expect(response.header['content-type']).toMatch(/^application\/json/);
           expect(
             sanitizeModuleMapForSnapshot(response.text)
           ).toEqual(JSON.stringify(modifiedRemoteMap));
@@ -304,6 +343,27 @@ describe('one-app-dev-cdn', () => {
       const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
 
       const fcdn = setupTest({ remoteModuleMapUrl, useLocalModules: true, appPort: 3000 });
+      got.mockReturnJsonOnce(defaultRemoteMap);
+
+      return supertest(fcdn)
+        .get('/module-map.json')
+        .then((response) => {
+          expect(response.status).toBe(200);
+          expect(response.header['content-type']).toMatch(/^application\/json/);
+          expect(
+            sanitizeModuleMapForSnapshot(response.text)
+          ).toMatchSnapshot();
+          expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
+        });
+    });
+
+    it('extends the remote map with the local map and uses host instead of localhost', () => {
+      expect.assertions(4);
+      const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
+
+      const fcdn = setupTest({
+        remoteModuleMapUrl, useLocalModules: true, appPort: 3000, useHost: true,
+      });
       got.mockReturnJsonOnce(defaultRemoteMap);
 
       return supertest(fcdn)

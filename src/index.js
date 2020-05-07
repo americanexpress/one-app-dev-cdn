@@ -57,6 +57,7 @@ export default ({
   remoteModuleMapUrl,
   useLocalModules,
   appPort,
+  useHost,
 }) => {
   if (!remoteModuleMapUrl && !useLocalModules) {
     throw new Error('remoteModuleMapUrl is a required param when useLocalModules is not true');
@@ -106,7 +107,7 @@ export default ({
             const remoteModuleMap = JSON.parse(r.body);
 
             const { modules } = remoteModuleMap;
-            const oneAppDevStaticsAddress = `http://localhost:${process.env.HTTP_ONE_APP_DEV_CDN_PORT}/static`;
+            const oneAppDevStaticsAddress = useHost ? `http://${req.headers.host}/static` : `http://localhost:${process.env.HTTP_ONE_APP_DEV_CDN_PORT}/static`;
 
             Object.keys(modules).forEach((moduleName) => {
               const module = modules[moduleName];
@@ -141,7 +142,7 @@ export default ({
         : {},
       (useLocalModules ? getLocalModuleMap({
         pathToModulemap: path.join(localDevPublicPath, 'module-map.json'),
-        oneAppDevCdnAddress: `http://localhost:${process.env.HTTP_ONE_APP_DEV_CDN_PORT}`,
+        oneAppDevCdnAddress: useHost ? `http://${req.headers.host}}` : `http://localhost:${process.env.HTTP_ONE_APP_DEV_CDN_PORT}`,
       })
         .then(JSON.parse) : {}),
     ])
