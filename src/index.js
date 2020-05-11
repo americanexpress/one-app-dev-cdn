@@ -16,7 +16,6 @@
 
 // native
 import path from 'path';
-import { promisify } from 'util';
 import fs from 'fs';
 
 // dependencies
@@ -28,10 +27,8 @@ import cors from 'cors';
 import ip from 'ip';
 import ProxyAgent from 'proxy-agent';
 
-const readFile = promisify(fs.readFile);
-
-const getLocalModuleMap = async ({ pathToModulemap, oneAppDevCdnAddress }) => {
-  const moduleMap = JSON.parse(await readFile(pathToModulemap, 'utf8'));
+const getLocalModuleMap = ({ pathToModulemap, oneAppDevCdnAddress }) => {
+  const moduleMap = JSON.parse(fs.readFileSync(pathToModulemap, 'utf8').toString());
   Object.keys(moduleMap.modules).forEach((moduleName) => {
     const module = moduleMap.modules[moduleName];
     module.browser.url = module.browser.url.replace('[one-app-dev-cdn-url]', oneAppDevCdnAddress);
@@ -94,6 +91,7 @@ export default ({
   // support one-app-cli's "serve-module"
   // merge local with remote, with local taking preference
   oneAppDevCdn.get('/module-map.json', (req, response) => {
+    const hostAddress = useHost ? `http://${req.headers.host}` : `http://localhost:${process.env.HTTP_ONE_APP_DEV_CDN_PORT}`;
     settle([
       remoteModuleMapUrl
         ? got(remoteModuleMapUrl, {
@@ -107,7 +105,7 @@ export default ({
             const remoteModuleMap = JSON.parse(r.body);
 
             const { modules } = remoteModuleMap;
-            const oneAppDevStaticsAddress = useHost ? `http://${req.headers.host}/static` : `http://localhost:${process.env.HTTP_ONE_APP_DEV_CDN_PORT}/static`;
+            const oneAppDevStaticsAddress = `${hostAddress}/static`;
 
             Object.keys(modules).forEach((moduleName) => {
               const module = modules[moduleName];
@@ -140,11 +138,10 @@ export default ({
           }
         )
         : {},
-      (useLocalModules ? getLocalModuleMap({
+      (useLocalModules ? JSON.parse(getLocalModuleMap({
         pathToModulemap: path.join(localDevPublicPath, 'module-map.json'),
-        oneAppDevCdnAddress: useHost ? `http://${req.headers.host}}` : `http://localhost:${process.env.HTTP_ONE_APP_DEV_CDN_PORT}`,
-      })
-        .then(JSON.parse) : {}),
+        oneAppDevCdnAddress: hostAddress,
+      })) : {}),
     ])
       .then(([remoteMap, localMap]) => {
         const map = {

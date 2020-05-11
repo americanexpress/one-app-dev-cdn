@@ -1,3 +1,10 @@
+## [3.2.2](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.2.1...v3.2.2) (2020-05-07)
+
+
+### Bug Fixes
+
+* **babel/runtime:** remove async syntax ([d4869e8](https://github.com/americanexpress/one-app-dev-cdn/commit/d4869e8ef276d83dd002d1332cb9e63feb6e8839))
+
 ## [3.2.1](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.2.0...v3.2.1) (2020-05-06)
 
 
