@@ -84,12 +84,22 @@ location where the remote module map is located (i.e. `https://my-domain.com/map
 
 Type: `boolean`
 
-Default: `true`<br>
-Whether to use modules from `localDevPublicPath`. Passed as `true` or `false`, defaults to `true`.
+Default: `false`<br>
+Whether to use modules from `localDevPublicPath`. Passed as `true` or `false`, defaults to `false`.
 
 **Note**: Either `remoteModuleMapUrl` OR `useLocalModules` is required. If both are provided then
 the remote module map will be merged with modules from `localDevPublicPath` with the local modules
 taking precedence.
+
+##### `useHost`
+
+Type: `boolean`
+
+Default: `false`<br>
+Whether to use `req.headers.host` or `localhost`. Passed as `true` or `false`, defaults to `false` (`localhost`).
+
+**Note**: The `req.headers.host` is useful if your tests use the `one-app-dev-cdn` on a CI environment or containers that 
+that require it to be accessible in the network by other containers or servers.
 
 ### Proxy Support
 
