@@ -1,3 +1,10 @@
+# [3.3.0](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.2.2...v3.3.0) (2020-05-13)
+
+
+### Features
+
+* **host:** flag to use req.host instead of localhost ([#14](https://github.com/americanexpress/one-app-dev-cdn/issues/14)) ([5e761a7](https://github.com/americanexpress/one-app-dev-cdn/commit/5e761a7bccba772e38a0db107dd4bb8a4342686a))
+
 ## [3.2.2](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.2.1...v3.2.2) (2020-05-07)
 
 
