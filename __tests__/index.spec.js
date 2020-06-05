@@ -19,6 +19,7 @@ import rimraf from 'rimraf';
 import fs from 'fs';
 import path from 'path';
 import mkdirp from 'mkdirp';
+import ProxyAgent from 'proxy-agent';
 import oneAppDevCdn from '../src';
 
 const pathToStubs = path.join(__dirname, 'stubs');
@@ -517,7 +518,23 @@ describe('one-app-dev-cdn', () => {
       expect(moduleResponse.status).toBe(200);
       expect(moduleResponse.header['content-type']).toMatch(/^application\/javascript/);
       expect(moduleResponse.text).toBe('console.log("a");');
-      expect(got.mock.calls).toMatchSnapshot('module response');
+      expect(got.mock.calls).toEqual([
+        [
+          'https://example.com/module-map.json',
+          {
+            agent: expect.any(ProxyAgent),
+          },
+        ],
+        [
+          'https://example.com//cdn/module-b/1.0.0/module-b.node.js',
+          {
+            agent: expect.any(ProxyAgent),
+            headers: {
+              connection: 'keep-alive',
+            },
+          },
+        ],
+      ]);
     });
 
     it('returns a 404 if a request for something not known as a module from the module map comes in', async () => {
@@ -538,7 +555,16 @@ describe('one-app-dev-cdn', () => {
       expect(
         sanitizeModuleMapForSnapshot(moduleMapResponse.text)
       ).toMatchSnapshot('module map response');
-      expect(got.mock.calls).toMatchSnapshot('remote calls from got');
+      expect(got.mock.calls).toEqual(
+        [
+          [
+            'https://example.com/module-map.json',
+            {
+              agent: expect.any(ProxyAgent),
+            },
+          ],
+        ]
+      );
 
       const moduleResponse = await supertest(fcdn)
         .get('/cdn/not-a-module/1.0.0/module-d.node.js?key="123');
@@ -563,7 +589,14 @@ describe('one-app-dev-cdn', () => {
       expect(
         sanitizeModuleMapForSnapshot(moduleMapResponse.text)
       ).toMatchSnapshot('module map response');
-      expect(got.mock.calls).toMatchSnapshot('remote calls from got');
+      expect(got.mock.calls).toEqual([
+        [
+          'https://example.com/module-map.json',
+          {
+            agent: expect.any(ProxyAgent),
+          },
+        ],
+      ]);
 
       const moduleResponse = await supertest(fcdn)
         .get('/cdn/module-b/1.0.0/module-b.node.js?key="123');
