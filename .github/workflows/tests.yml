@@ -41,7 +41,7 @@ jobs:
         NODE_ENV: production
         GITHUB_TOKEN: ${{ secrets.PA_TOKEN }}
     - name: Lint
-      run: npm run lint
+      run: npm run test:lint
       env:
         NODE_ENV: production
         GITHUB_TOKEN: ${{ secrets.PA_TOKEN }}
