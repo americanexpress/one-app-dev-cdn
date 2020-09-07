@@ -3,6 +3,7 @@
 </h1>
 
 [![npm](https://img.shields.io/npm/v/@americanexpress/one-app-dev-cdn)](https://www.npmjs.com/package/@americanexpress/one-app-dev-cdn)
+![Tests](https://github.com/americanexpress/one-app-dev-cdn/workflows/Tests/badge.svg)
 
 > Building a local module and you want to load it? This supports loading of your remote and local modules together for local development.
 
