@@ -1,9 +1,8 @@
 <h1 align="center">
-  <img src='https://github.com/americanexpress/one-app-dev-cdn/raw/master/one-app-dev-cdn.png' alt="One App Dev Proxy - One Amex" width='50%'/>
+  <img src='https://github.com/americanexpress/one-app-dev-cdn/raw/main/one-app-dev-cdn.png' alt="One App Dev Proxy - One Amex" width='50%'/>
 </h1>
 
 [![npm](https://img.shields.io/npm/v/@americanexpress/one-app-dev-cdn)](https://www.npmjs.com/package/@americanexpress/one-app-dev-cdn)
-[![Travis (.org) branch](https://img.shields.io/travis/americanexpress/one-app-dev-cdn/master)](https://travis-ci.org/americanexpress/one-app-dev-cdn)
 
 > Building a local module and you want to load it? This supports loading of your remote and local modules together for local development.
 
@@ -123,7 +122,7 @@ Please feel free to open pull requests and see [CONTRIBUTING.md](./CONTRIBUTING.
 ## 🗝️ License
 
 Any contributions made under this project will be governed by the [Apache License
-2.0](https://github.com/americanexpress/one-app-dev-cdn/blob/master/LICENSE.txt).
+2.0](https://github.com/americanexpress/one-app-dev-cdn/blob/main/LICENSE.txt).
 
 ## 🗣️ Code of Conduct
 
