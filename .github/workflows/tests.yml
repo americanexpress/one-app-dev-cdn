@@ -29,7 +29,6 @@ jobs:
       run: npm run test:unit
       env:
         NODE_ENV: production
-        GITHUB_TOKEN: ${{ secrets.PA_TOKEN }}
     - name: Git History Test
       run: npm run test:git-history
       env:
