@@ -33,7 +33,6 @@ jobs:
       run: npm run test:git-history
       env:
         NODE_ENV: production
-        GITHUB_TOKEN: ${{ secrets.PA_TOKEN }}
     - name: Lockfile Lint Test
       run: npm run test:lockfile
       env:
