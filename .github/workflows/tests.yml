@@ -37,7 +37,6 @@ jobs:
       run: npm run test:lockfile
       env:
         NODE_ENV: production
-        GITHUB_TOKEN: ${{ secrets.PA_TOKEN }}
     - name: Lint
       run: npm run test:lint
       env:
