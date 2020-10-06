@@ -12,6 +12,8 @@
  * under the License.
  */
 
+import '@babel/polyfill';
+
 /* eslint-disable jest/no-disabled-tests, no-console */
 import supertest from 'supertest';
 import got from 'got';
@@ -123,7 +125,8 @@ describe('one-app-dev-cdn', () => {
     });
   };
 
-  const sanitizeModuleMapForSnapshot = moduleMapString => moduleMapString.replace(
+  const sanitizeModuleMapForSnapshot = (moduleMapString) => moduleMapString.replace(
+    // eslint-disable-next-line unicorn/no-unsafe-regex, unicorn/better-regex
     /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,8}/g,
     '0.0.0.0:3001'
   );
@@ -135,7 +138,7 @@ describe('one-app-dev-cdn', () => {
       .resetAllMocks()
       .resetModules();
 
-    got.mockImplementation(url => Promise.reject(new Error(`no mock for ${url} set up`)));
+    got.mockImplementation((url) => Promise.reject(new Error(`no mock for ${url} set up`)));
   });
 
   it('add CORS headers based on appPort configuration value', () => {
@@ -149,7 +152,7 @@ describe('one-app-dev-cdn', () => {
       .then((response) => {
         expect(response.headers['access-control-allow-origin']).toBe(`http://localhost:${appPort}`);
         expect(response.headers.vary).toEqual(expect.any(String));
-        const varyHeaders = response.headers.vary.split(',').map(s => s.trim());
+        const varyHeaders = response.headers.vary.split(',').map((s) => s.trim());
         expect(varyHeaders).toContain('Origin');
         expect(varyHeaders).toContain('Accept-Encoding');
       });

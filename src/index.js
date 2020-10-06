@@ -49,7 +49,7 @@ const matchPathToKnownRemoteModuleUrl = (incomingRequestPath, remoteModuleBaseUr
   });
 };
 
-export default ({
+const oneAppDevCdnFactory = ({
   localDevPublicPath,
   remoteModuleMapUrl,
   useLocalModules,
@@ -138,10 +138,10 @@ export default ({
           }
         )
         : {},
-      (useLocalModules ? JSON.parse(getLocalModuleMap({
+      useLocalModules ? JSON.parse(getLocalModuleMap({
         pathToModulemap: path.join(localDevPublicPath, 'module-map.json'),
         oneAppDevCdnAddress: hostAddress,
-      })) : {}),
+      })) : {},
     ])
       .then(([remoteMap, localMap]) => {
         const map = {
@@ -178,13 +178,13 @@ export default ({
         headers: { connection: 'keep-alive' },
         agent: new ProxyAgent(),
       })
-        .then(remoteModuleResponse => remoteModuleResponse.body)
+        .then((remoteModuleResponse) => remoteModuleResponse.body)
         .then(
-          remoteModuleResponse => res
+          (remoteModuleResponse) => res
             .status(200)
             .type(path.extname(req.path))
             .send(remoteModuleResponse),
-          err => res
+          (err) => res
             .status(500)
             .send(err.message)
         );
@@ -197,3 +197,5 @@ export default ({
 
   return oneAppDevCdn;
 };
+
+export default oneAppDevCdnFactory;
