@@ -75,7 +75,7 @@
     "jest": "^26.5.0",
     "lockfile-lint": "^4.3.6",
     "mkdirp": "^0.5.1",
-    "semantic-release": "^15.13.31",
+    "semantic-release": "^17.2.1",
     "supertest": "^3.0.0"
   },
   "husky": {
