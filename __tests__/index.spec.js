@@ -442,7 +442,7 @@ describe('one-app-dev-cdn', () => {
         });
     });
 
-    it('warns and ignores error loading remote module-map', () => {
+    it('warns and ignores error fetching remote module-map', () => {
       expect.assertions(6);
       const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
       const fcdn = setupTest({ remoteModuleMapUrl, useLocalModules: true, appPort: 3000 });
@@ -458,6 +458,27 @@ describe('one-app-dev-cdn', () => {
           expect(console.warn).toHaveBeenCalledTimes(1);
           expect(console.warn).toHaveBeenCalledWith(
             'one-app-dev-cdn error loading module map from https://my-domain.com/map/module-map.json: Error: simulated timeout or some other network error!'
+          );
+        });
+    });
+
+    it('warns and ignores error loading invalid remote module-map', () => {
+      expect.assertions(6);
+      const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
+      const fcdn = setupTest({ remoteModuleMapUrl, useLocalModules: true, appPort: 3000 });
+      const invalidModuleMap = [];
+      got.mockReturnJsonOnce(invalidModuleMap);
+
+      return supertest(fcdn)
+        .get('/module-map.json')
+        .then((response) => {
+          expect(response.status).toBe(200);
+          expect(response.header['content-type']).toMatch(/^application\/json/);
+          expect(response.text).toEqual(JSON.stringify(defaultLocalMap));
+          expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
+          expect(console.warn).toHaveBeenCalledTimes(1);
+          expect(console.warn).toHaveBeenCalledWith(
+            'one-app-dev-cdn error loading module map from https://my-domain.com/map/module-map.json: TypeError: Cannot convert undefined or null to object'
           );
         });
     });
