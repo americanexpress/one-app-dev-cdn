@@ -1,3 +1,10 @@
+## [3.3.1](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.3.0...v3.3.1) (2021-04-06)
+
+
+### Bug Fixes
+
+* **module-map:** unhandled promise ([#23](https://github.com/americanexpress/one-app-dev-cdn/issues/23)) ([ded4b91](https://github.com/americanexpress/one-app-dev-cdn/commit/ded4b910cbc9139041d9ba5bccfe53cf500b99bd))
+
 # [3.3.0](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.2.2...v3.3.0) (2020-05-13)
 
 
