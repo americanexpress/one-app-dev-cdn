@@ -103,10 +103,8 @@ const oneAppDevCdnFactory = ({
             remoteModuleBaseUrls = [];
 
             const remoteModuleMap = JSON.parse(r.body);
-
             const { modules } = remoteModuleMap;
             const oneAppDevStaticsAddress = `${hostAddress}/static`;
-
             Object.keys(modules).forEach((moduleName) => {
               const module = modules[moduleName];
 
@@ -129,14 +127,13 @@ const oneAppDevCdnFactory = ({
               );
             });
             return remoteModuleMap;
-          },
-          (error) => {
-            console.warn(
-              `one-app-dev-cdn error loading module map from ${remoteModuleMapUrl}: ${error}`
-            );
-            return {};
           }
-        )
+        ).catch((error) => {
+          console.warn(
+            `one-app-dev-cdn error loading module map from ${remoteModuleMapUrl}: ${error}`
+          );
+          return {};
+        })
         : {},
       useLocalModules ? JSON.parse(getLocalModuleMap({
         pathToModulemap: path.join(localDevPublicPath, 'module-map.json'),
