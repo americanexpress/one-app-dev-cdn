@@ -12,8 +12,7 @@
  * under the License.
  */
 
-/* eslint-disable no-console */
-
+/* eslint-disable no-console -- disable for tests */
 // native
 import path from 'path';
 import fs from 'fs';
@@ -38,16 +37,15 @@ const getLocalModuleMap = ({ pathToModulemap, oneAppDevCdnAddress }) => {
   return JSON.stringify(moduleMap, null, 2);
 };
 
-// disabling bc auto-fixing this rule causes a line longer than 100 chars so the rules conflict
-// eslint-disable-next-line arrow-body-style
-const matchPathToKnownRemoteModuleUrl = (incomingRequestPath, remoteModuleBaseUrls) => {
-  return remoteModuleBaseUrls.find((remoteModuleBaseUrl) => {
-    const remoteModuleUrlOrigin = new URL(remoteModuleBaseUrl).origin;
-    const remoteModulePath = remoteModuleBaseUrl.replace(remoteModuleUrlOrigin, '');
+const matchPathToKnownRemoteModuleUrl = (
+  incomingRequestPath,
+  remoteModuleBaseUrls
+) => remoteModuleBaseUrls.find((remoteModuleBaseUrl) => {
+  const remoteModuleUrlOrigin = new URL(remoteModuleBaseUrl).origin;
+  const remoteModulePath = remoteModuleBaseUrl.replace(remoteModuleUrlOrigin, '');
 
-    return incomingRequestPath.startsWith(remoteModulePath);
-  });
-};
+  return incomingRequestPath.startsWith(remoteModulePath);
+});
 
 const oneAppDevCdnFactory = ({
   localDevPublicPath,
@@ -161,7 +159,6 @@ const oneAppDevCdnFactory = ({
   // for locally served modules
   oneAppDevCdn.use('/modules', express.static(`${localDevPublicPath}/modules`));
 
-  // eslint-disable-next-line consistent-return
   oneAppDevCdn.get('*', (req, res) => {
     const incomingRequestPath = req.path;
 
@@ -186,7 +183,7 @@ const oneAppDevCdnFactory = ({
             .send(err.message)
         );
     } else {
-      return res
+      res
         .status(404)
         .send('Not found');
     }
@@ -195,4 +192,5 @@ const oneAppDevCdnFactory = ({
   return oneAppDevCdn;
 };
 
+/* eslint-enable no-console -- because eslint-comments/disable-enable-pair */
 export default oneAppDevCdnFactory;
