@@ -12,7 +12,7 @@
  * under the License.
  */
 
-const got = jest.genMockFromModule('got');
+const got = jest.createMockFromModule('got');
 
 got.mockReturnJsonOnce = (obj) => {
   if (obj instanceof Error) {

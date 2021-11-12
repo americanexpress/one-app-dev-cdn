@@ -14,7 +14,7 @@
 
 import '@babel/polyfill';
 
-/* eslint-disable jest/no-disabled-tests, no-console */
+/* eslint-disable no-console -- console used in tests */
 import supertest from 'supertest';
 import got from 'got';
 import rimraf from 'rimraf';
@@ -126,8 +126,8 @@ describe('one-app-dev-cdn', () => {
   };
 
   const sanitizeModuleMapForSnapshot = (moduleMapString) => moduleMapString.replace(
-    // eslint-disable-next-line unicorn/no-unsafe-regex, unicorn/better-regex
-    /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,8}/g,
+    // eslint-disable-next-line unicorn/no-unsafe-regex -- regex used in test
+    /(?:\d{1,3}\.){3}\d{1,3}:\d{1,8}/g,
     '0.0.0.0:3001'
   );
 
@@ -652,3 +652,4 @@ describe('one-app-dev-cdn', () => {
     process.env.NODE_ENV = origNodeEnv;
   });
 });
+/* eslint-enable no-console -- because eslint-comments/disable-enable-pair */
