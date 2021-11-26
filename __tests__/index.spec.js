@@ -546,13 +546,19 @@ describe('one-app-dev-cdn', () => {
         [
           'https://example.com/module-map.json',
           {
-            agent: expect.any(ProxyAgent),
+            agent: {
+              http: expect.any(ProxyAgent),
+              https: expect.any(ProxyAgent),
+            },
           },
         ],
         [
           'https://example.com//cdn/module-b/1.0.0/module-b.node.js',
           {
-            agent: expect.any(ProxyAgent),
+            agent: {
+              http: expect.any(ProxyAgent),
+              https: expect.any(ProxyAgent),
+            },
             headers: {
               connection: 'keep-alive',
             },
@@ -584,7 +590,10 @@ describe('one-app-dev-cdn', () => {
           [
             'https://example.com/module-map.json',
             {
-              agent: expect.any(ProxyAgent),
+              agent: {
+                http: expect.any(ProxyAgent),
+                https: expect.any(ProxyAgent),
+              },
             },
           ],
         ]
@@ -617,7 +626,10 @@ describe('one-app-dev-cdn', () => {
         [
           'https://example.com/module-map.json',
           {
-            agent: expect.any(ProxyAgent),
+            agent: {
+              http: expect.any(ProxyAgent),
+              https: expect.any(ProxyAgent),
+            },
           },
         ],
       ]);
@@ -625,6 +637,29 @@ describe('one-app-dev-cdn', () => {
       const moduleResponse = await supertest(fcdn)
         .get('/cdn/module-b/1.0.0/module-b.node.js?key="123');
       expect(moduleResponse.status).toBe(500);
+    });
+
+    it('returns a correct status code from proxy request', async () => {
+      expect.assertions(1);
+
+      const fcdn = setupTest({
+        useLocalModules: false,
+        appPort: 3000,
+        remoteModuleMapUrl: 'https://example.com/module-map.json',
+      });
+
+      got.mockReturnJsonOnce(defaultRemoteMap);
+      const gotError = new Error('Network error!');
+      gotError.code = 'ERR_NON_2XX_3XX_RESPONSE';
+      gotError.response = { statusCode: 501 };
+
+      await supertest(fcdn)
+        .get('/module-map.json');
+
+      got.mockReturnFileOnce(gotError);
+      const moduleResponse = await supertest(fcdn)
+        .get('/cdn/module-b/1.0.0/some-langpack.json');
+      expect(moduleResponse.status).toBe(501);
     });
   });
 

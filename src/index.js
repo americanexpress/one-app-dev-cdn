@@ -18,7 +18,6 @@ import path from 'path';
 import fs from 'fs';
 
 // dependencies
-import settle from 'promise-settle';
 import express from 'express';
 import got from 'got';
 import compression from 'compression';
@@ -26,8 +25,8 @@ import cors from 'cors';
 import ip from 'ip';
 import ProxyAgent from 'proxy-agent';
 
-const getLocalModuleMap = ({ pathToModulemap, oneAppDevCdnAddress }) => {
-  const moduleMap = JSON.parse(fs.readFileSync(pathToModulemap, 'utf8').toString());
+const getLocalModuleMap = ({ pathToModuleMap, oneAppDevCdnAddress }) => {
+  const moduleMap = JSON.parse(fs.readFileSync(pathToModuleMap, 'utf8').toString());
   Object.keys(moduleMap.modules).forEach((moduleName) => {
     const module = moduleMap.modules[moduleName];
     module.browser.url = module.browser.url.replace('[one-app-dev-cdn-url]', oneAppDevCdnAddress);
@@ -90,10 +89,13 @@ const oneAppDevCdnFactory = ({
   // merge local with remote, with local taking preference
   oneAppDevCdn.get('/module-map.json', (req, response) => {
     const hostAddress = useHost ? `http://${req.headers.host}` : `http://localhost:${process.env.HTTP_ONE_APP_DEV_CDN_PORT}`;
-    settle([
+    Promise.allSettled([
       remoteModuleMapUrl
         ? got(remoteModuleMapUrl, {
-          agent: new ProxyAgent(),
+          agent: {
+            https: new ProxyAgent(),
+            http: new ProxyAgent(),
+          },
         }).then(
           (r) => {
             // clear out remoteModuleBaseUrls as the new module map now has different urls in it
@@ -134,19 +136,21 @@ const oneAppDevCdnFactory = ({
         })
         : {},
       useLocalModules ? JSON.parse(getLocalModuleMap({
-        pathToModulemap: path.join(localDevPublicPath, 'module-map.json'),
+        pathToModuleMap: path.join(localDevPublicPath, 'module-map.json'),
         oneAppDevCdnAddress: hostAddress,
       })) : {},
     ])
-      .then(([remoteMap, localMap]) => {
+      .then(([remoteMapRequest, localMapRequest]) => {
+        // remoteMap always fulfilled
+        const remoteMap = remoteMapRequest.value;
+        const localMap = localMapRequest.value;
+
         const map = {
-          ...remoteMap.value(),
+          ...remoteMap,
           key: 'not-used-in-development',
           modules: {
-            ...remoteMap.value().modules,
-            ...localMap.isFulfilled() && {
-              ...localMap.value().modules,
-            },
+            ...remoteMap.modules,
+            ...localMap.modules,
           },
         };
 
@@ -170,18 +174,21 @@ const oneAppDevCdnFactory = ({
       const remoteModuleBaseUrlOrigin = new URL(knownRemoteModuleBaseUrl).origin;
       got(`${remoteModuleBaseUrlOrigin}/${req.path}`, {
         headers: { connection: 'keep-alive' },
-        agent: new ProxyAgent(),
+        agent: {
+          https: new ProxyAgent(),
+          http: new ProxyAgent(),
+        },
       })
-        .then((remoteModuleResponse) => remoteModuleResponse.body)
-        .then(
-          (remoteModuleResponse) => res
-            .status(200)
-            .type(path.extname(req.path))
-            .send(remoteModuleResponse),
-          (err) => res
-            .status(500)
-            .send(err.message)
-        );
+        .then((remoteModuleResponse) => res
+          .status(res.statusCode)
+          .type(path.extname(req.path))
+          .send(remoteModuleResponse.body))
+        .catch((err) => {
+          const status = err.code === 'ERR_NON_2XX_3XX_RESPONSE' ? err.response.statusCode : 500;
+          return res
+            .status(status)
+            .send(err.message);
+        });
     } else {
       res
         .status(404)
