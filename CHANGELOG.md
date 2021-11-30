@@ -1,3 +1,10 @@
+## [3.3.2](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.3.1...v3.3.2) (2021-11-30)
+
+
+### Bug Fixes
+
+* **module-files:** return correct status ([9a7712d](https://github.com/americanexpress/one-app-dev-cdn/commit/9a7712df3c6a2b1b8e64a17df973da4a2677c3d2))
+
 ## [3.3.1](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.3.0...v3.3.1) (2021-04-06)
 
 
