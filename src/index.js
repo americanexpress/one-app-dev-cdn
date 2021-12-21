@@ -18,10 +18,11 @@ import path from 'path';
 import fs from 'fs';
 
 // dependencies
-import express from 'express';
+import Fastify from 'fastify';
 import got from 'got';
-import compression from 'compression';
-import cors from 'cors';
+import compress from 'fastify-compress';
+import fastifyStatic from 'fastify-static';
+import cors from 'fastify-cors';
 import ip from 'ip';
 import ProxyAgent from 'proxy-agent';
 
@@ -52,6 +53,7 @@ const oneAppDevCdnFactory = ({
   useLocalModules,
   appPort,
   useHost,
+  routePrefix = '',
 }) => {
   if (!remoteModuleMapUrl && !useLocalModules) {
     throw new Error('remoteModuleMapUrl is a required param when useLocalModules is not true');
@@ -65,29 +67,33 @@ const oneAppDevCdnFactory = ({
     console.log('one-app-dev-cdn only using locally served modules');
   }
 
-  const oneAppDevCdn = express();
+  const oneAppDevCdn = Fastify({ logger: true });
 
   if (process.env.NODE_ENV === 'production') {
     console.warn('do not include one-app-dev-cdn in production');
     return oneAppDevCdn;
   }
 
-  oneAppDevCdn.disable('x-powered-by');
-
-  oneAppDevCdn.use(compression());
-
-  oneAppDevCdn.use(cors({
+  oneAppDevCdn.register(compress);
+  oneAppDevCdn.register(cors, {
     origin: [
       `http://localhost:${appPort}`,
       `http://${ip.address()}:${appPort}`,
       undefined,
     ],
-  }));
+  });
+  // for locally served modules
+  // oneAppDevCdn.use('/modules', express.static());
+  oneAppDevCdn.register(fastifyStatic, {
+    root: `${localDevPublicPath}/modules`,
+    prefix: `${routePrefix}/modules`,
+    index: false,
+  });
 
   let remoteModuleBaseUrls = [];
   // support one-app-cli's "serve-module"
   // merge local with remote, with local taking preference
-  oneAppDevCdn.get('/module-map.json', (req, response) => {
+  oneAppDevCdn.get(`${routePrefix}/module-map.json`, (req, reply) => {
     const hostAddress = useHost ? `http://${req.headers.host}` : `http://localhost:${process.env.HTTP_ONE_APP_DEV_CDN_PORT}`;
     Promise.allSettled([
       remoteModuleMapUrl
@@ -154,16 +160,13 @@ const oneAppDevCdnFactory = ({
           },
         };
 
-        response
-          .status(200)
+        reply
+          .code(200)
           .send(map);
       });
   });
 
-  // for locally served modules
-  oneAppDevCdn.use('/modules', express.static(`${localDevPublicPath}/modules`));
-
-  oneAppDevCdn.get('*', (req, res) => {
+  oneAppDevCdn.get('*', (req, reply) => {
     const incomingRequestPath = req.path;
 
     if (matchPathToKnownRemoteModuleUrl(incomingRequestPath, remoteModuleBaseUrls)) {
@@ -179,19 +182,19 @@ const oneAppDevCdnFactory = ({
           http: new ProxyAgent(),
         },
       })
-        .then((remoteModuleResponse) => res
-          .status(res.statusCode)
+        .then((remoteModuleResponse) => reply
+          .code(remoteModuleResponse.statusCode)
           .type(path.extname(req.path))
           .send(remoteModuleResponse.body))
         .catch((err) => {
           const status = err.code === 'ERR_NON_2XX_3XX_RESPONSE' ? err.response.statusCode : 500;
-          return res
+          return reply
             .status(status)
             .send(err.message);
         });
     } else {
-      res
-        .status(404)
+      reply
+        .code(404)
         .send('Not found');
     }
   });
