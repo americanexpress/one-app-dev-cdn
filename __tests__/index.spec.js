@@ -148,7 +148,7 @@ describe('one-app-dev-cdn', () => {
 
     return fcdn.inject()
       .get('/module-map.json')
-      .headers({'Origin': `http://localhost:${appPort}`})
+      .headers({ 'Origin': `http://localhost:${appPort}` })
       .then((response) => {
         expect(response.headers['access-control-allow-origin']).toBe(`http://localhost:${appPort}`);
         expect(response.headers.vary).toEqual(expect.any(String));
@@ -221,7 +221,7 @@ describe('one-app-dev-cdn', () => {
 
       return fcdn.inject()
         .get('/module-map.json')
-        .headers({'Host': 'localhost:3001'})
+        .headers({ 'Host': 'localhost:3001' })
         .then((response) => {
           expect(response.statusCode).toBe(200);
           expect(response.headers['content-type']).toMatch(/^application\/json/);
@@ -245,7 +245,7 @@ describe('one-app-dev-cdn', () => {
           );
         });
     });
- 
+
     it('does not use the local map when useLocalModules is false', () => {
       expect.assertions(3);
 
@@ -266,7 +266,7 @@ describe('one-app-dev-cdn', () => {
           expect(responseBody.modules).not.toEqual(defaultLocalMap.modules);
         });
     });
-  
+
     it('mirrors the remote map but modifies the key property and the module URLs', () => {
       expect.assertions(4);
       const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
@@ -292,280 +292,281 @@ describe('one-app-dev-cdn', () => {
           },
         },
       };
-      return supertest(fcdn)
+      return fcdn.inject()
         .get('/module-map.json')
         .then((response) => {
-          expect(response.status).toBe(200);
-          expect(response.header['content-type']).toMatch(/^application\/json/);
-          expect(response.text).toEqual(JSON.stringify(modifiedRemoteMap));
+          expect(response.statusCode).toBe(200);
+          expect(response.headers['content-type']).toMatch(/^application\/json/);
+          expect(response.body).toEqual(JSON.stringify(modifiedRemoteMap));
           expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
         });
     });
+
+    it('modifies the key property and the module URLs using the req.host instead of localhost', () => {
+      expect.assertions(4);
+      const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
+      const fcdn = setupTest({
+        appPort: 3000, useLocalModules: false, remoteModuleMapUrl, useHost: true,
+      });
+      got.mockReturnJsonOnce(defaultRemoteMap);
+
+      const modifiedRemoteMap = {
+        key: 'not-used-in-development',
+        modules: {
+          'module-b': {
+            node: {
+              url: 'http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.node.js',
+              integrity: '123',
+            },
+            browser: {
+              url: 'http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.browser.js',
+              integrity: '234',
+            },
+            legacyBrowser: {
+              url: 'http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.legacy.browser.js',
+              integrity: '345',
+            },
+          },
+        },
+      };
+      return fcdn.inject()
+        .get('/module-map.json')
+        .headers({ 'Host': '127.0.0.1:53653' })
+        .then((response) => {
+          expect(response.statusCode).toBe(200);
+          expect(response.headers['content-type']).toMatch(/^application\/json/);
+          expect(
+            sanitizeModuleMapForSnapshot(response.body)
+          ).toEqual(JSON.stringify(modifiedRemoteMap));
+          expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
+        });
+    });
+
+    it('extends the remote map with the local map', () => {
+      expect.assertions(4);
+      const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
+
+      const fcdn = setupTest({ remoteModuleMapUrl, useLocalModules: true, appPort: 3000 });
+      got.mockReturnJsonOnce(defaultRemoteMap);
+
+      return fcdn.inject()
+        .get('/module-map.json')
+        .then((response) => {
+          expect(response.statusCode).toBe(200);
+          expect(response.headers['content-type']).toMatch(/^application\/json/);
+          expect(
+            sanitizeModuleMapForSnapshot(response.body)
+          ).toMatchSnapshot();
+          expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
+        });
+    });
+    it('extends the remote map with the local map and uses host instead of localhost', () => {
+      expect.assertions(4);
+      const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
+
+      const fcdn = setupTest({
+        remoteModuleMapUrl, useLocalModules: true, appPort: 3000, useHost: true,
+      });
+      got.mockReturnJsonOnce(defaultRemoteMap);
+
+      return fcdn.inject()
+        .get('/module-map.json')
+        .then((response) => {
+          expect(response.statusCode).toBe(200);
+          expect(response.headers['content-type']).toMatch(/^application\/json/);
+          expect(
+            sanitizeModuleMapForSnapshot(response.body)
+          ).toMatchSnapshot();
+          expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
+        });
+    });
+
+    it('does not extend the remote map with the local map when useLocalModules is false', () => {
+      expect.assertions(4);
+      const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
+      const fcdn = setupTest({ useLocalModules: false, remoteModuleMapUrl, appPort: 3000 });
+      got.mockReturnJsonOnce(defaultRemoteMap);
+
+      return fcdn.inject()
+        .get('/module-map.json')
+        .then((response) => {
+          expect(response.statusCode).toBe(200);
+          expect(response.headers['content-type']).toMatch(/^application\/json/);
+
+          expect(
+            sanitizeModuleMapForSnapshot(response.body)
+          ).toEqual(
+            JSON.stringify({
+              ...defaultRemoteMap,
+              key: 'not-used-in-development',
+            }).replace(/https:\/\/example.com\//g, 'http://localhost:3001/static/')
+          );
+          expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
+        });
+    });
+
+    it('always lets the local map win', () => {
+      expect.assertions(4);
+      const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
+
+      const fcdn = setupTest({ remoteModuleMapUrl, useLocalModules: true, appPort: 3000 });
+      const remoteMap = {
+        key: '1233',
+        modules: {
+          'module-a': {
+            node: {
+              url: 'https://example.com/cdn/module-b/2.0.0/module-b.node.js',
+              integrity: '123',
+            },
+            browser: {
+              url: 'https://example.com/cdn/module-b/2.0.0/module-b.browser.js',
+              integrity: '234',
+            },
+            legacyBrowser: {
+              url: 'https://example.com/cdn/module-b/2.0.0/module-b.legacy.browser.js',
+              integrity: '345',
+            },
+          },
+        },
+      };
+      got.mockReturnJsonOnce(remoteMap);
+
+      return fcdn.inject()
+        .get('/module-map.json')
+        .then((response) => {
+          expect(response.statusCode).toBe(200);
+          expect(response.headers['content-type']).toMatch(/^application\/json/);
+          expect(response.body).toEqual(JSON.stringify(defaultLocalMap));
+          expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
+        });
+    });
+
+    it('warns and ignores error fetching remote module-map', () => {
+      expect.assertions(6);
+      const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
+      const fcdn = setupTest({ remoteModuleMapUrl, useLocalModules: true, appPort: 3000 });
+      got.mockReturnJsonOnce(new Error('simulated timeout or some other network error!'));
+
+      return fcdn.inject()
+        .get('/module-map.json')
+        .then((response) => {
+          expect(response.statusCode).toBe(200);
+          expect(response.headers['content-type']).toMatch(/^application\/json/);
+          expect(response.body).toEqual(JSON.stringify(defaultLocalMap));
+          expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
+          expect(console.warn).toHaveBeenCalledTimes(1);
+          expect(console.warn).toHaveBeenCalledWith(
+            'one-app-dev-cdn error loading module map from https://my-domain.com/map/module-map.json: Error: simulated timeout or some other network error!'
+          );
+        });
+    });
+    
+    it('warns and ignores error loading invalid remote module-map', () => {
+      expect.assertions(6);
+      const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
+      const fcdn = setupTest({ remoteModuleMapUrl, useLocalModules: true, appPort: 3000 });
+      const invalidModuleMap = [];
+      got.mockReturnJsonOnce(invalidModuleMap);
+      
+      return fcdn.inject()
+      .get('/module-map.json')
+      .then((response) => {
+        expect(response.statusCode).toBe(200);
+        expect(response.headers['content-type']).toMatch(/^application\/json/);
+        expect(response.body).toEqual(JSON.stringify(defaultLocalMap));
+        expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
+        expect(console.warn).toHaveBeenCalledTimes(1);
+        expect(console.warn).toHaveBeenCalledWith(
+          'one-app-dev-cdn error loading module map from https://my-domain.com/map/module-map.json: TypeError: Cannot convert undefined or null to object'
+          );
+        });
+      });
+  
+      
+    it('does not attempt to fetch remote module map when remoteModuleMapUrl is not given', () => {
+      expect.assertions(4);
+
+      const fcdn = setupTest({
+        appPort: 3000,
+        useLocalModules: true,
+      });
+
+      return fcdn.inject()
+        .get('/module-map.json')
+        .then((response) => {
+          expect(response.statusCode).toBe(200);
+          expect(response.headers['content-type']).toMatch(/^application\/json/);
+          expect(response.body).toEqual(JSON.stringify(defaultLocalMap));
+          expect(got.mock.calls).toEqual([]);
+        });
+    });
   });
-  //   it('modifies the key property and the module URLs using the req.host instead of localhost', () => {
-  //     expect.assertions(4);
-  //     const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
-  //     const fcdn = setupTest({
-  //       appPort: 3000, useLocalModules: false, remoteModuleMapUrl, useHost: true,
-  //     });
-  //     got.mockReturnJsonOnce(defaultRemoteMap);
+  console.log(mockLocalDevPublicPath)
+//HERE 
+  describe('modules', () => {
+    it.only('gets local modules', () => {
+      expect.assertions(3);
 
-  //     const modifiedRemoteMap = {
-  //       key: 'not-used-in-development',
-  //       modules: {
-  //         'module-b': {
-  //           node: {
-  //             url: 'http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.node.js',
-  //             integrity: '123',
-  //           },
-  //           browser: {
-  //             url: 'http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.browser.js',
-  //             integrity: '234',
-  //           },
-  //           legacyBrowser: {
-  //             url: 'http://0.0.0.0:3001/static/cdn/module-b/1.0.0/module-b.legacy.browser.js',
-  //             integrity: '345',
-  //           },
-  //         },
-  //       },
-  //     };
-  //     return supertest(fcdn)
-  //       .get('/module-map.json')
-  //       .then((response) => {
-  //         expect(response.status).toBe(200);
-  //         expect(response.header['content-type']).toMatch(/^application\/json/);
-  //         expect(
-  //           sanitizeModuleMapForSnapshot(response.text)
-  //         ).toEqual(JSON.stringify(modifiedRemoteMap));
-  //         expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
-  //       });
-  //   });
+      const fcdn = setupTest({ useLocalModules: true, appPort: 3000});
+      return fcdn.inject()
+        .get('http://localhost:3001/static/cdn/modules/module-a/1.0.0/module-a.node.js?key=123')
+        .then((response) => {
+          expect(response.statusCode).toBe(200);
+          expect(response.headers['content-type']).toMatch(/^application\/javascript/);
+          expect(response.body).toBe('console.log("a");');
+        });
+    });
+//ABOVE
+    it('gets remote modules', async () => {
+      expect.assertions(7);
 
-  //   it('extends the remote map with the local map', () => {
-  //     expect.assertions(4);
-  //     const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
+      const fcdn = setupTest({
+        useLocalModules: false,
+        appPort: 3000,
+        remoteModuleMapUrl: 'https://example.com/module-map.json',
+      });
+      got.mockReturnJsonOnce(defaultRemoteMap);
+      got.mockReturnFileOnce('console.log("a");');
 
-  //     const fcdn = setupTest({ remoteModuleMapUrl, useLocalModules: true, appPort: 3000 });
-  //     got.mockReturnJsonOnce(defaultRemoteMap);
+      const moduleMapResponse = await fcdn.inject()
+        .get('/module-map.json');
 
-  //     return supertest(fcdn)
-  //       .get('/module-map.json')
-  //       .then((response) => {
-  //         expect(response.status).toBe(200);
-  //         expect(response.header['content-type']).toMatch(/^application\/json/);
-  //         expect(
-  //           sanitizeModuleMapForSnapshot(response.text)
-  //         ).toMatchSnapshot();
-  //         expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
-  //       });
-  //   });
+      expect(moduleMapResponse.statusCode).toBe(200);
+      expect(moduleMapResponse.headers['content-type']).toMatch(/^application\/json/);
+      expect(
+        sanitizeModuleMapForSnapshot(moduleMapResponse.body)
+      ).toMatchSnapshot('module map response');
 
-  //   it('extends the remote map with the local map and uses host instead of localhost', () => {
-  //     expect.assertions(4);
-  //     const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
-
-  //     const fcdn = setupTest({
-  //       remoteModuleMapUrl, useLocalModules: true, appPort: 3000, useHost: true,
-  //     });
-  //     got.mockReturnJsonOnce(defaultRemoteMap);
-
-  //     return supertest(fcdn)
-  //       .get('/module-map.json')
-  //       .then((response) => {
-  //         expect(response.status).toBe(200);
-  //         expect(response.header['content-type']).toMatch(/^application\/json/);
-  //         expect(
-  //           sanitizeModuleMapForSnapshot(response.text)
-  //         ).toMatchSnapshot();
-  //         expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
-  //       });
-  //   });
-
-  //   it('does not extend the remote map with the local map when useLocalModules is false', () => {
-  //     expect.assertions(4);
-  //     const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
-  //     const fcdn = setupTest({ useLocalModules: false, remoteModuleMapUrl, appPort: 3000 });
-  //     got.mockReturnJsonOnce(defaultRemoteMap);
-
-  //     return supertest(fcdn)
-  //       .get('/module-map.json')
-  //       .then((response) => {
-  //         expect(response.status).toBe(200);
-  //         expect(response.header['content-type']).toMatch(/^application\/json/);
-
-  //         expect(
-  //           sanitizeModuleMapForSnapshot(response.text)
-  //         ).toEqual(
-  //           JSON.stringify({
-  //             ...defaultRemoteMap,
-  //             key: 'not-used-in-development',
-  //           }).replace(/https:\/\/example.com\//g, 'http://localhost:3001/static/')
-  //         );
-  //         expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
-  //       });
-  //   });
-
-  //   it('always lets the local map win', () => {
-  //     expect.assertions(4);
-  //     const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
-
-  //     const fcdn = setupTest({ remoteModuleMapUrl, useLocalModules: true, appPort: 3000 });
-  //     const remoteMap = {
-  //       key: '1233',
-  //       modules: {
-  //         'module-a': {
-  //           node: {
-  //             url: 'https://example.com/cdn/module-b/2.0.0/module-b.node.js',
-  //             integrity: '123',
-  //           },
-  //           browser: {
-  //             url: 'https://example.com/cdn/module-b/2.0.0/module-b.browser.js',
-  //             integrity: '234',
-  //           },
-  //           legacyBrowser: {
-  //             url: 'https://example.com/cdn/module-b/2.0.0/module-b.legacy.browser.js',
-  //             integrity: '345',
-  //           },
-  //         },
-  //       },
-  //     };
-  //     got.mockReturnJsonOnce(remoteMap);
-
-  //     return supertest(fcdn)
-  //       .get('/module-map.json')
-  //       .then((response) => {
-  //         expect(response.status).toBe(200);
-  //         expect(response.header['content-type']).toMatch(/^application\/json/);
-  //         expect(response.text).toEqual(JSON.stringify(defaultLocalMap));
-  //         expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
-  //       });
-  //   });
-
-  //   it('warns and ignores error fetching remote module-map', () => {
-  //     expect.assertions(6);
-  //     const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
-  //     const fcdn = setupTest({ remoteModuleMapUrl, useLocalModules: true, appPort: 3000 });
-  //     got.mockReturnJsonOnce(new Error('simulated timeout or some other network error!'));
-
-  //     return supertest(fcdn)
-  //       .get('/module-map.json')
-  //       .then((response) => {
-  //         expect(response.status).toBe(200);
-  //         expect(response.header['content-type']).toMatch(/^application\/json/);
-  //         expect(response.text).toEqual(JSON.stringify(defaultLocalMap));
-  //         expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
-  //         expect(console.warn).toHaveBeenCalledTimes(1);
-  //         expect(console.warn).toHaveBeenCalledWith(
-  //           'one-app-dev-cdn error loading module map from https://my-domain.com/map/module-map.json: Error: simulated timeout or some other network error!'
-  //         );
-  //       });
-  //   });
-
-  //   it('warns and ignores error loading invalid remote module-map', () => {
-  //     expect.assertions(6);
-  //     const remoteModuleMapUrl = 'https://my-domain.com/map/module-map.json';
-  //     const fcdn = setupTest({ remoteModuleMapUrl, useLocalModules: true, appPort: 3000 });
-  //     const invalidModuleMap = [];
-  //     got.mockReturnJsonOnce(invalidModuleMap);
-
-  //     return supertest(fcdn)
-  //       .get('/module-map.json')
-  //       .then((response) => {
-  //         expect(response.status).toBe(200);
-  //         expect(response.header['content-type']).toMatch(/^application\/json/);
-  //         expect(response.text).toEqual(JSON.stringify(defaultLocalMap));
-  //         expect(got.mock.calls[0]).toContain(remoteModuleMapUrl);
-  //         expect(console.warn).toHaveBeenCalledTimes(1);
-  //         expect(console.warn).toHaveBeenCalledWith(
-  //           'one-app-dev-cdn error loading module map from https://my-domain.com/map/module-map.json: TypeError: Cannot convert undefined or null to object'
-  //         );
-  //       });
-  //   });
-
-  //   it('does not attempt to fetch remote module map when remoteModuleMapUrl is not given', () => {
-  //     expect.assertions(4);
-
-  //     const fcdn = setupTest({
-  //       appPort: 3000,
-  //       useLocalModules: true,
-  //     });
-
-  //     return supertest(fcdn)
-  //       .get('/module-map.json')
-  //       .then((response) => {
-  //         expect(response.status).toBe(200);
-  //         expect(response.header['content-type']).toMatch(/^application\/json/);
-  //         expect(response.text).toEqual(JSON.stringify(defaultLocalMap));
-  //         expect(got.mock.calls).toEqual([]);
-  //       });
-  //   });
-  // });
-
-  // describe('modules', () => {
-  //   it('gets local modules', () => {
-  //     expect.assertions(3);
-
-  //     const fcdn = setupTest({ useLocalModules: true, appPort: 3000 });
-
-  //     return supertest(fcdn)
-  //       .get('/modules/module-a/1.0.0/module-a.browser.js?key="123')
-  //       .then((response) => {
-  //         expect(response.status).toBe(200);
-  //         expect(response.header['content-type']).toMatch(/^application\/javascript/);
-  //         expect(response.text).toBe('console.log("a");');
-  //       });
-  //   });
-
-  //   it('gets remote modules', async () => {
-  //     expect.assertions(7);
-
-  //     const fcdn = setupTest({
-  //       useLocalModules: false,
-  //       appPort: 3000,
-  //       remoteModuleMapUrl: 'https://example.com/module-map.json',
-  //     });
-  //     got.mockReturnJsonOnce(defaultRemoteMap);
-  //     got.mockReturnFileOnce('console.log("a");');
-
-  //     const moduleMapResponse = await supertest(fcdn)
-  //       .get('/module-map.json');
-
-  //     expect(moduleMapResponse.status).toBe(200);
-  //     expect(moduleMapResponse.header['content-type']).toMatch(/^application\/json/);
-  //     expect(
-  //       sanitizeModuleMapForSnapshot(moduleMapResponse.text)
-  //     ).toMatchSnapshot('module map response');
-
-  //     const moduleResponse = await supertest(fcdn)
-  //       .get('/cdn/module-b/1.0.0/module-b.node.js?key="123');
-  //     expect(moduleResponse.status).toBe(200);
-  //     expect(moduleResponse.header['content-type']).toMatch(/^application\/javascript/);
-  //     expect(moduleResponse.text).toBe('console.log("a");');
-  //     expect(got.mock.calls).toEqual([
-  //       [
-  //         'https://example.com/module-map.json',
-  //         {
-  //           agent: {
-  //             http: expect.any(ProxyAgent),
-  //             https: expect.any(ProxyAgent),
-  //           },
-  //         },
-  //       ],
-  //       [
-  //         'https://example.com//cdn/module-b/1.0.0/module-b.node.js',
-  //         {
-  //           agent: {
-  //             http: expect.any(ProxyAgent),
-  //             https: expect.any(ProxyAgent),
-  //           },
-  //           headers: {
-  //             connection: 'keep-alive',
-  //           },
-  //         },
-  //       ],
-  //     ]);
-  //   });
-
+      const moduleResponse = await fcdn.inject()
+        .get('/cdn/module-b/1.0.0/module-b.node.js?key="123"');
+      expect(moduleResponse.statusCode).toBe(200);
+      expect(moduleResponse.headers['content-type']).toMatch(/^application\/javascript/);
+      expect(moduleResponse.body).toBe('console.log("a");');
+      expect(got.mock.calls).toEqual([
+        [
+          'https://example.com/module-map.json',
+          {
+            agent: {
+              http: expect.any(ProxyAgent),
+              https: expect.any(ProxyAgent),
+            },
+          },
+        ],
+        [
+          'https://example.com//cdn/module-b/1.0.0/module-b.node.js',
+          {
+            agent: {
+              http: expect.any(ProxyAgent),
+              https: expect.any(ProxyAgent),
+            },
+            headers: {
+              connection: 'keep-alive',
+            },
+          },
+        ],
+      ]);
+    });
+  });
   //   it('returns a 404 if a request for something not known as a module from the module map comes in', async () => {
   //     expect.assertions(5);
 
