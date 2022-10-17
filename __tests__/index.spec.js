@@ -18,7 +18,7 @@ import '@babel/polyfill';
 import supertest from 'supertest';
 import got from 'got';
 import rimraf from 'rimraf';
-import fs from 'fs';
+import fs, { fchmod } from 'fs';
 import path from 'path';
 import mkdirp from 'mkdirp';
 import ProxyAgent from 'proxy-agent';
@@ -140,6 +140,11 @@ describe('one-app-dev-cdn', () => {
 
     got.mockImplementation((url) => Promise.reject(new Error(`no mock for ${url} set up`)));
   });
+
+  // afterEach(() => {
+  //   rimraf.sync(pathToCache);
+  //   rimraf.sync(pathToStubs);
+  // });
 
   it('add CORS headers based on appPort configuration value', () => {
     expect.assertions(3);
@@ -501,15 +506,14 @@ describe('one-app-dev-cdn', () => {
         });
     });
   });
-  console.log(mockLocalDevPublicPath)
-//HERE 
+// //HERE 
   describe('modules', () => {
     it.only('gets local modules', () => {
       expect.assertions(3);
 
       const fcdn = setupTest({ useLocalModules: true, appPort: 3000});
       return fcdn.inject()
-        .get('http://localhost:3001/static/cdn/modules/module-a/1.0.0/module-a.node.js?key=123')
+        .get('/modules/module-a/1.0.0/module-a.browser.js?key="123')
         .then((response) => {
           expect(response.statusCode).toBe(200);
           expect(response.headers['content-type']).toMatch(/^application\/javascript/);
@@ -527,18 +531,19 @@ describe('one-app-dev-cdn', () => {
       });
       got.mockReturnJsonOnce(defaultRemoteMap);
       got.mockReturnFileOnce('console.log("a");');
+      await fcdn.ready()
+      // const moduleMapResponse = await fcdn.inject()
+      //   .get('/module-map.json');
 
-      const moduleMapResponse = await fcdn.inject()
-        .get('/module-map.json');
-
-      expect(moduleMapResponse.statusCode).toBe(200);
-      expect(moduleMapResponse.headers['content-type']).toMatch(/^application\/json/);
-      expect(
-        sanitizeModuleMapForSnapshot(moduleMapResponse.body)
-      ).toMatchSnapshot('module map response');
+      // expect(moduleMapResponse.statusCode).toBe(200);
+      // expect(moduleMapResponse.headers['content-type']).toMatch(/^application\/json/);
+      // expect(
+      //   sanitizeModuleMapForSnapshot(moduleMapResponse.body)
+      // ).toMatchSnapshot('module map response');
 
       const moduleResponse = await fcdn.inject()
-        .get('/cdn/module-b/1.0.0/module-b.node.js?key="123"');
+      .get('https://example.com/module-map.json')
+      //.headers({ 'Host': 'localhost:3001' })
       expect(moduleResponse.statusCode).toBe(200);
       expect(moduleResponse.headers['content-type']).toMatch(/^application\/javascript/);
       expect(moduleResponse.body).toBe('console.log("a");');
@@ -566,7 +571,27 @@ describe('one-app-dev-cdn', () => {
         ],
       ]);
     });
+
+      it('does this ', async () => {
+        const fcdn = setupTest({
+          useLocalModules: false,
+          appPort: 3000,
+          remoteModuleMapUrl: 'https://example.com/module-map.json',
+        });
+
+       // await fcdn.ready();
+        console.warn();
+        return fcdn.inject()
+        .get('https://example.com/module-map.json')
+       // .headers({"Host": "localhost:3001"})
+        .then((response)=>{
+          console.log(fcdn)
+          //expect(fcdn).toBe()
+        })
+      })
+
   });
+
   //   it('returns a 404 if a request for something not known as a module from the module map comes in', async () => {
   //     expect.assertions(5);
 
@@ -616,6 +641,7 @@ describe('one-app-dev-cdn', () => {
   //     got.mockReturnJsonOnce(new Error('Network error!'));
   //     const moduleMapResponse = await supertest(fcdn)
   //       .get('/module-map.json');
+
 
   //     expect(moduleMapResponse.status).toBe(200);
   //     expect(moduleMapResponse.header['content-type']).toMatch(/^application\/json/);
@@ -678,13 +704,10 @@ describe('one-app-dev-cdn', () => {
   //   });
   // });
 
-  afterEach(() => {
-    rimraf.sync(pathToCache);
-    rimraf.sync(pathToStubs);
-  });
 
   afterAll(() => {
     process.env.NODE_ENV = origNodeEnv;
   });
 });
+
 /* eslint-enable no-console -- because eslint-comments/disable-enable-pair */

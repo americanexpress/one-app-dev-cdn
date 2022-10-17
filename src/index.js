@@ -49,7 +49,7 @@ export const oneAppDevCdnFactory = ({
     console.log('one-app-dev-cdn only using locally served modules');
   }
 
-  const oneAppDevCdn = Fastify();
+  const oneAppDevCdn = Fastify({logger:true});
 
   if (process.env.NODE_ENV === 'production') {
     console.warn('do not include one-app-dev-cdn in production');
@@ -70,7 +70,7 @@ export const oneAppDevCdnFactory = ({
   oneAppDevCdn.register(fastifyStatic, {
     root: `${localDevPublicPath}/modules`,
     prefix: `${routePrefix}/modules`,
-    index: false,
+    index: true,
     etag:true,
   });
 
@@ -122,7 +122,7 @@ export const oneAppDevCdnFactory = ({
           console.warn(
             `one-app-dev-cdn error loading module map from ${remoteModuleMapUrl}: ${error}`
           );
-          return {};
+          return{}
         })
         : {},
       useLocalModules ? JSON.parse(getLocalModuleMap({
