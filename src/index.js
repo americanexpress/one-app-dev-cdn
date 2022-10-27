@@ -8,6 +8,7 @@ import Fastify from 'fastify';
 import ip from 'ip';
 import ProxyAgent from 'proxy-agent';
 
+
 const getLocalModuleMap = ({ pathToModuleMap, oneAppDevCdnAddress }) => {
   const moduleMap = JSON.parse(fs.readFileSync(pathToModuleMap, 'utf8').toString());
   Object.keys(moduleMap.modules).forEach((moduleName) => {
@@ -49,14 +50,18 @@ export const oneAppDevCdnFactory = ({
     console.log('one-app-dev-cdn only using locally served modules');
   }
 
-  const oneAppDevCdn = Fastify({logger:true});
+  const oneAppDevCdn = Fastify({ logger: true });
 
   if (process.env.NODE_ENV === 'production') {
     console.warn('do not include one-app-dev-cdn in production');
     return oneAppDevCdn;
   }
-
-
+  oneAppDevCdn.register(compress, {
+    global: true, onUnsupportedEncoding: (encoding, request, reply) => {
+      reply.code(406)
+      return JSON.stringify(request.body)
+    }
+  })
   oneAppDevCdn.register(cors, {
     origin: [
       `http://localhost:${appPort}`,
@@ -65,13 +70,14 @@ export const oneAppDevCdnFactory = ({
     ],
   });
 
+
   // for locally served modules
   // oneAppDevCdn.use('/modules', express.static());
   oneAppDevCdn.register(fastifyStatic, {
     root: `${localDevPublicPath}/modules`,
     prefix: `${routePrefix}/modules`,
-    index: true,
-    etag:true,
+    index: false,
+
   });
 
   let remoteModuleBaseUrls = [];
@@ -122,7 +128,7 @@ export const oneAppDevCdnFactory = ({
           console.warn(
             `one-app-dev-cdn error loading module map from ${remoteModuleMapUrl}: ${error}`
           );
-          return{}
+          return {}
         })
         : {},
       useLocalModules ? JSON.parse(getLocalModuleMap({
@@ -143,15 +149,19 @@ export const oneAppDevCdnFactory = ({
             ...localMap.modules,
           },
         };
-
-        reply
-          .code(200)
-          .send(map);
+        try {
+          reply
+            .code(200)
+            .send(map)
+        } catch (err) {
+          reply.send(500).send(err)
+        }
       });
+
   });
 
   oneAppDevCdn.get('*', (req, reply) => {
-    const incomingRequestPath = req.path;
+    const incomingRequestPath = req.url;
 
     if (matchPathToKnownRemoteModuleUrl(incomingRequestPath, remoteModuleBaseUrls)) {
       const knownRemoteModuleBaseUrl = matchPathToKnownRemoteModuleUrl(
@@ -159,7 +169,7 @@ export const oneAppDevCdnFactory = ({
         remoteModuleBaseUrls
       );
       const remoteModuleBaseUrlOrigin = new URL(knownRemoteModuleBaseUrl).origin;
-      got(`${remoteModuleBaseUrlOrigin}/${req.path}`, {
+      got(`${remoteModuleBaseUrlOrigin}/${req.url}`, {
 
         headers: { connection: 'keep-alive' },
         agent: {
@@ -169,13 +179,13 @@ export const oneAppDevCdnFactory = ({
       })
         .then((remoteModuleResponse) => reply
           .code(remoteModuleResponse.statusCode)
-          .type(path.extname(req.path))
+          .type(path.extname(req.url))
           .send(remoteModuleResponse.body))
         .catch((err) => {
           const status = err.statusCode === 'ERR_NON_2XX_3XX_RESPONSE' ? err.response.statusCode : 500;
           return reply
             .code(status)
-            .send(err.message);
+            .send(err);
         });
     } else {
       reply
