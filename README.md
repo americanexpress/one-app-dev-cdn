@@ -98,8 +98,22 @@ Type: `boolean`
 Default: `false`<br>
 Whether to use `req.headers.host` or `localhost`. Passed as `true` or `false`, defaults to `false` (`localhost`).
 
-**Note**: The `req.headers.host` is useful if your tests use the `one-app-dev-cdn` on a CI environment or containers that 
+**Note**: The `req.headers.host` is useful if your tests use the `one-app-dev-cdn` on a CI environment or containers that
 that require it to be accessible in the network by other containers or servers.
+
+#### `hooks`
+
+Type: `object`
+
+Default: `{}`<br>
+Description
+
+##### `hooks.localModuleBundleNotFound`
+
+Type: `function`
+
+Default: `undefined`
+Description
 
 ### Proxy Support
 

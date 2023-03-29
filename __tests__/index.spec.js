@@ -661,6 +661,8 @@ describe('one-app-dev-cdn', () => {
         .get('/cdn/module-b/1.0.0/some-langpack.json');
       expect(moduleResponse.status).toBe(501);
     });
+
+    it.todo('calls the localModuleBundleNotFound hook when a local module is not found');
   });
 
   describe('production', () => {

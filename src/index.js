@@ -52,6 +52,9 @@ const oneAppDevCdnFactory = ({
   useLocalModules,
   appPort,
   useHost,
+  hooks: {
+    localModuleBundleNotFound,
+  } = {},
 }) => {
   if (!remoteModuleMapUrl && !useLocalModules) {
     throw new Error('remoteModuleMapUrl is a required param when useLocalModules is not true');
@@ -161,7 +164,23 @@ const oneAppDevCdnFactory = ({
   });
 
   // for locally served modules
-  oneAppDevCdn.use('/modules', express.static(`${localDevPublicPath}/modules`));
+  oneAppDevCdn.use('/modules', (function() {
+    const localModuleFilesystemMiddleware = express.static(`${localDevPublicPath}/modules`);
+    if (!localModuleBundleNotFound) {
+      return localModuleFilesystemMiddleware;
+    }
+
+    if (typeof localModuleBundleNotFound !== 'function') {
+      throw new TypeError('hooks.localModuleBundleNotFound must be a function if provided');
+    }
+
+    return (request, response, next) => localModuleFilesystemMiddleware(request, response, () => {
+      const [, moduleName, moduleVersion] = /^\/(.+)\/(\d+\.\d+\.+\d+(?:-.+)?)\//.exec(request.url) || [];
+      const moduleIdentifier = moduleName && moduleVersion ? `${moduleName}@${moduleVersion}` : request.url;
+      localModuleBundleNotFound(moduleIdentifier);
+      next();
+    });
+  }()));
 
   oneAppDevCdn.get('*', (req, res) => {
     const incomingRequestPath = req.path;
