@@ -30,13 +30,14 @@ const rootDirectory = process.env.HOMEPATH || process.env.HOME;
 const fileName = '.one-app-module-cache';
 const filePath = path.join(rootDirectory, fileName);
 
-const getFromCache = () => {
+// gets cached module from .one-app-module-cache
+const getCachedModules = () => {
   let hasCachedFile = false;
   try {
     fs.accessSync(filePath, fs.constants.F_OK);
     hasCachedFile = true;
   } catch (error) {
-    console.log('Creating cachedModule file');
+    console.log(`Creating ${fileName} on ${rootDirectory}`);
     try {
       fs.writeFileSync(filePath, JSON.stringify('{}'));
       console.log(`${fileName} created successfully on ${rootDirectory}`);
@@ -55,7 +56,6 @@ const getFromCache = () => {
   return {};
 };
 
-// setOnCache
 const setOnCache = (content) => {
   try {
     fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
@@ -68,11 +68,11 @@ const cacheBust = (url, cachedModules) => {
   const updatedCachedModules = cachedModules;
   moduleNames.forEach((moduleName) => {
     if (url.match(moduleName)) {
-      console.log('deleted from cache', url);
       delete updatedCachedModules[url];
+      console.log(`Deleted ${url} from cache`);
     }
   });
-  return { updatedCachedModules };
+  return updatedCachedModules;
 };
 
 const getLocalModuleMap = ({ pathToModuleMap, oneAppDevCdnAddress }) => {
@@ -224,12 +224,11 @@ const oneAppDevCdnFactory = ({
         remoteModuleBaseUrls
       );
       const remoteModuleBaseUrlOrigin = new URL(knownRemoteModuleBaseUrl).origin;
-      const cachedModules = getFromCache();
+      const cachedModules = getCachedModules();
       if (cachedModules[incomingRequestPath]) {
-        console.log(`Returning from cached modules for path ${incomingRequestPath}`);
-        // const content = JSON.stringify(cachedModules[knownRemoteModuleBaseUrl], null, 2);
+        console.log(`Returning from cached module for path ${incomingRequestPath}`);
         return res
-          .status(res.statusCode)
+          .status(200)
           .type(path.extname(incomingRequestPath))
           .send(cachedModules[incomingRequestPath]);
       }
@@ -242,7 +241,7 @@ const oneAppDevCdnFactory = ({
         },
       })
         .then((remoteModuleResponse) => {
-          const { updatedCachedModules } = cacheBust(incomingRequestPath, cachedModules);
+          const updatedCachedModules = cacheBust(incomingRequestPath, cachedModules);
           updatedCachedModules[incomingRequestPath] = remoteModuleResponse.body;
           setOnCache(updatedCachedModules);
           return res
