@@ -26,36 +26,50 @@ import ip from 'ip';
 import ProxyAgent from 'proxy-agent';
 
 const moduleNames = [];
-const cacheDirectory = process.env.HOMEPATH || process.env.HOME;
+const userHomeDirectory = process.env.HOME || process.env.USERPROFILE;
 const fileName = '.one-app-module-cache';
-const filePath = path.join(cacheDirectory, fileName);
+const directoryName = '.one-app';
+const directoryPath = path.join(userHomeDirectory, directoryName);
+const filePath = path.join(directoryPath, fileName);
 
 // show cache size and how to delete info on start
 const showCacheInfo = () => {
   fs.stat(filePath, (error, stats) => {
     if (error) {
       console.log('There was error checking file stat', error);
+    } else {
+      const fileSizeOnMB = stats.size / (1024 * 1024); // bytes to mb
+      console.log(`File size of ${fileName}: ${fileSizeOnMB.toFixed(2)} MB`);
+      console.log(`To delete cache, please run \n rm ${filePath}`);
     }
-    const fileSizeOnMB = stats.size / (1024 * 1024); // bytes to mb
-    console.log(`File size of ${fileName}: ${fileSizeOnMB.toFixed(2)} MB`);
-    console.log(`To delete cache, please run \nrm ${filePath}`);
   });
 };
 
-// gets cached module from .one-app-module-cache
+// setup folder and file
+const setupCacheFile = () => {
+  fs.mkdir(directoryPath, { recursive: true }, (error) => {
+    if (error) {
+      console.log(`There was error creating ${directoryName} directory`);
+    } else {
+      console.log(`Successfully created ${directoryPath}`);
+      console.log(`Creating ${fileName}`);
+      try {
+        fs.writeFileSync(filePath, JSON.stringify('{}'));
+        console.log(`${fileName} created successfully on ${filePath}`);
+      } catch (err) {
+        console.error(`Error creating ${fileName} on ${filePath}, \n${err}`);
+      }
+    }
+  });
+};
+
+// gets cached module from ~/.one-app/.one-app-module-cache
 const getCachedModules = () => {
   let hasCachedFile = false;
-  try {
-    fs.accessSync(filePath, fs.constants.F_OK);
+  if (fs.existsSync(filePath)) {
     hasCachedFile = true;
-  } catch (error) {
-    console.log(`Creating ${fileName} on ${cacheDirectory}`);
-    try {
-      fs.writeFileSync(filePath, JSON.stringify('{}'));
-      console.log(`${fileName} created successfully on ${cacheDirectory}`);
-    } catch (err) {
-      console.error(`Error creating ${fileName} on ${cacheDirectory}, \n${err}`);
-    }
+  } else {
+    setupCacheFile();
   }
   if (hasCachedFile) {
     try {
