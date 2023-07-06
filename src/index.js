@@ -26,9 +26,21 @@ import ip from 'ip';
 import ProxyAgent from 'proxy-agent';
 
 const moduleNames = [];
-const rootDirectory = process.env.HOMEPATH || process.env.HOME;
+const cacheDirectory = process.env.HOMEPATH || process.env.HOME;
 const fileName = '.one-app-module-cache';
-const filePath = path.join(rootDirectory, fileName);
+const filePath = path.join(cacheDirectory, fileName);
+
+// show cache size and how to delete info on start
+const showCacheInfo = () => {
+  fs.stat(filePath, (error, stats) => {
+    if (error) {
+      console.log('There was error checking file stat', error);
+    }
+    const fileSizeOnMB = stats.size / (1024 * 1024); // bytes to mb
+    console.log(`File size of ${fileName}: ${fileSizeOnMB.toFixed(2)} MB`);
+    console.log(`To delete cache, please run rm ${filePath}`);
+  });
+};
 
 // gets cached module from .one-app-module-cache
 const getCachedModules = () => {
@@ -37,16 +49,17 @@ const getCachedModules = () => {
     fs.accessSync(filePath, fs.constants.F_OK);
     hasCachedFile = true;
   } catch (error) {
-    console.log(`Creating ${fileName} on ${rootDirectory}`);
+    console.log(`Creating ${fileName} on ${cacheDirectory}`);
     try {
       fs.writeFileSync(filePath, JSON.stringify('{}'));
-      console.log(`${fileName} created successfully on ${rootDirectory}`);
+      console.log(`${fileName} created successfully on ${cacheDirectory}`);
     } catch (err) {
-      console.error(`Error creating ${fileName} on ${rootDirectory}, \n${err}`);
+      console.error(`Error creating ${fileName} on ${cacheDirectory}, \n${err}`);
     }
   }
   if (hasCachedFile) {
     try {
+      showCacheInfo();
       const cachedContent = fs.readFileSync(filePath, 'utf8');
       return JSON.parse(cachedContent);
     } catch (err) {
@@ -56,18 +69,21 @@ const getCachedModules = () => {
   return {};
 };
 
+const cachedModules = getCachedModules();
+
 const setOnCache = (content) => {
   try {
+    // add debounce
     fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
   } catch (error) {
     console.error('There was an error updating content');
   }
 };
 
-const cacheBust = (url, cachedModules) => {
-  const updatedCachedModules = cachedModules;
+const removeModuleFromCache = (url, _cachedModules) => {
+  const updatedCachedModules = _cachedModules;
   moduleNames.forEach((moduleName) => {
-    if (url.match(moduleName)) {
+    if (url.match(new RegExp(`\\b\\/${moduleName}\\/\\b`))) {
       delete updatedCachedModules[url];
       console.log(`Deleted ${url} from cache`);
     }
@@ -224,7 +240,6 @@ const oneAppDevCdnFactory = ({
         remoteModuleBaseUrls
       );
       const remoteModuleBaseUrlOrigin = new URL(knownRemoteModuleBaseUrl).origin;
-      const cachedModules = getCachedModules();
       if (cachedModules[incomingRequestPath]) {
         console.log(`Returning from cached module for path ${incomingRequestPath}`);
         return res
@@ -241,7 +256,7 @@ const oneAppDevCdnFactory = ({
         },
       })
         .then((remoteModuleResponse) => {
-          const updatedCachedModules = cacheBust(incomingRequestPath, cachedModules);
+          const updatedCachedModules = removeModuleFromCache(incomingRequestPath, cachedModules);
           updatedCachedModules[incomingRequestPath] = remoteModuleResponse.body;
           setOnCache(updatedCachedModules);
           return res
