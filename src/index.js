@@ -38,7 +38,7 @@ const showCacheInfo = () => {
     }
     const fileSizeOnMB = stats.size / (1024 * 1024); // bytes to mb
     console.log(`File size of ${fileName}: ${fileSizeOnMB.toFixed(2)} MB`);
-    console.log(`To delete cache, please run rm ${filePath}`);
+    console.log(`To delete cache, please run \nrm ${filePath}`);
   });
 };
 
@@ -71,13 +71,19 @@ const getCachedModules = () => {
 
 const cachedModules = getCachedModules();
 
-const setOnCache = (content) => {
-  try {
-    // add debounce
-    fs.writeFileSync(filePath, JSON.stringify(content, null, 2));
-  } catch (error) {
-    console.error('There was an error updating content');
-  }
+let timerId = null;
+
+const setOnCache = (content, delay = 500) => {
+  // added debounce
+  clearTimeout(timerId);
+  timerId = setTimeout(() => {
+    fs.writeFile(filePath, JSON.stringify(content, null, 2), (error) => {
+      if (error) {
+        console.log(`There was an error updating content \n ${error}`);
+      }
+    });
+    timerId = null;
+  }, delay);
 };
 
 const removeModuleFromCache = (url, _cachedModules) => {
