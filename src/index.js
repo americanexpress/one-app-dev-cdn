@@ -24,92 +24,10 @@ import compression from 'compression';
 import cors from 'cors';
 import ip from 'ip';
 import ProxyAgent from 'proxy-agent';
+import { getCachedModules, setOnCache, removeModuleFromCache } from './util';
 
 const moduleNames = [];
-const userHomeDirectory = process.env.HOME || process.env.USERPROFILE;
-const fileName = '.one-app-module-cache';
-const directoryName = '.one-app';
-const directoryPath = path.join(userHomeDirectory, directoryName);
-const filePath = path.join(directoryPath, fileName);
-
-// show cache size and how to delete info on start
-const showCacheInfo = () => {
-  fs.stat(filePath, (error, stats) => {
-    if (error) {
-      console.log('There was error checking file stat', error);
-    } else {
-      const fileSizeOnMB = stats.size / (1024 * 1024); // bytes to mb
-      console.log(`File size of ${fileName}: ${fileSizeOnMB.toFixed(2)} MB`);
-      console.log(`To delete cache, please run \n rm ${filePath}`);
-    }
-  });
-};
-
-// setup folder and file
-const setupCacheFile = () => {
-  fs.mkdir(directoryPath, { recursive: true }, (error) => {
-    if (error) {
-      console.log(`There was error creating ${directoryName} directory`);
-    } else {
-      console.log(`Successfully created ${directoryPath}`);
-      console.log(`Creating ${fileName}`);
-      try {
-        fs.writeFileSync(filePath, JSON.stringify('{}'));
-        console.log(`${fileName} created successfully on ${filePath}`);
-      } catch (err) {
-        console.error(`Error creating ${fileName} on ${filePath}, \n${err}`);
-      }
-    }
-  });
-};
-
-// gets cached module from ~/.one-app/.one-app-module-cache
-const getCachedModules = () => {
-  let hasCachedFile = false;
-  if (fs.existsSync(filePath)) {
-    hasCachedFile = true;
-  } else {
-    setupCacheFile();
-  }
-  if (hasCachedFile) {
-    try {
-      showCacheInfo();
-      const cachedContent = fs.readFileSync(filePath, 'utf8');
-      return JSON.parse(cachedContent);
-    } catch (err) {
-      console.error('Could not parse JSON content', err);
-    }
-  }
-  return {};
-};
-
 const cachedModules = getCachedModules();
-
-let timerId = null;
-
-const setOnCache = (content, delay = 500) => {
-  // added debounce
-  clearTimeout(timerId);
-  timerId = setTimeout(() => {
-    fs.writeFile(filePath, JSON.stringify(content, null, 2), (error) => {
-      if (error) {
-        console.log(`There was an error updating content \n ${error}`);
-      }
-    });
-    timerId = null;
-  }, delay);
-};
-
-const removeModuleFromCache = (url, _cachedModules) => {
-  const updatedCachedModules = _cachedModules;
-  moduleNames.forEach((moduleName) => {
-    if (url.match(new RegExp(`\\b\\/${moduleName}\\/\\b`))) {
-      delete updatedCachedModules[url];
-      console.log(`Deleted ${url} from cache`);
-    }
-  });
-  return updatedCachedModules;
-};
 
 const getLocalModuleMap = ({ pathToModuleMap, oneAppDevCdnAddress }) => {
   const moduleMap = JSON.parse(fs.readFileSync(pathToModuleMap, 'utf8').toString());
@@ -276,7 +194,11 @@ const oneAppDevCdnFactory = ({
         },
       })
         .then((remoteModuleResponse) => {
-          const updatedCachedModules = removeModuleFromCache(incomingRequestPath, cachedModules);
+          const updatedCachedModules = removeModuleFromCache(
+            incomingRequestPath,
+            cachedModules,
+            moduleNames
+          );
           updatedCachedModules[incomingRequestPath] = remoteModuleResponse.body;
           setOnCache(updatedCachedModules);
           return res
