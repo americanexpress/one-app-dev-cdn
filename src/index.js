@@ -179,7 +179,6 @@ const oneAppDevCdnFactory = ({
       );
       const remoteModuleBaseUrlOrigin = new URL(knownRemoteModuleBaseUrl).origin;
       if (cachedModules[incomingRequestPath]) {
-        console.log(`Returning from cached module for path ${incomingRequestPath}`);
         return res
           .status(200)
           .type(path.extname(incomingRequestPath))

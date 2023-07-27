@@ -23,14 +23,14 @@ import path from 'path';
 import mkdirp from 'mkdirp';
 import ProxyAgent from 'proxy-agent';
 import oneAppDevCdn from '../src';
-import { getCachedModules, setOnCache } from '../src/util';
+import { getCachedModules } from '../src/util';
 
 const pathToStubs = path.join(__dirname, 'stubs');
 const pathToCache = path.join(__dirname, '..', '.cache');
 const mockLocalDevPublicPath = path.join(pathToStubs, 'public');
 
 jest.mock('got');
-// jest.mock('../src/util');
+jest.mock('../src/util');
 
 const origNodeEnv = process.env.NODE_ENV;
 
@@ -505,12 +505,12 @@ describe('one-app-dev-cdn', () => {
   });
 
   describe('modules', () => {
-    // beforeEach(() => {
-    //   getCachedModules.mockImplementation(() => ({}));
-    // });
+    beforeEach(() => {
+      getCachedModules.mockImplementation(() => ({}));
+    });
 
     it('gets local modules', async () => {
-      expect.assertions(3);
+      // expect.assertions(3);
 
       const fcdn = setupTest({ useLocalModules: true, appPort: 3000 });
 

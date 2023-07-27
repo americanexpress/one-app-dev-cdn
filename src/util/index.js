@@ -8,10 +8,10 @@ monkeypatches.replaceGlobalConsole(logger);
 /* eslint-disable no-console -- console used in tests */
 
 const userHomeDirectory = process.env.HOME || process.env.USERPROFILE;
-const fileName = '.one-app-module-cache';
-const directoryName = '.one-app';
-const directoryPath = path.join(userHomeDirectory, directoryName);
-const filePath = path.join(directoryPath, fileName);
+export const fileName = '.one-app-module-cache';
+export const directoryName = '.one-app';
+export const directoryPath = path.join(userHomeDirectory, directoryName);
+export const filePath = path.join(directoryPath, fileName);
 
 // show cache size and how to delete info on start
 export const showCacheInfo = () => {
