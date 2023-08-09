@@ -3,7 +3,6 @@ import fs from 'fs';
 import {
   getCachedModules,
   setOnCache,
-  removeModuleFromCache,
   showCacheInfo,
   setupCacheFile,
   fileName,
@@ -12,37 +11,49 @@ import {
   filePath,
 } from '../../src/util';
 
-/* eslint-disable no-console -- console used in tests */
-
 jest.mock('fs');
 
-describe('Cache module', () => {
-  jest.spyOn(console, 'log');
-  jest.spyOn(console, 'error');
-
+describe('Cache module utils', () => {
+  let logSpy;
+  let errorSpy;
+  const originalProcessEnv = process.env;
   beforeEach(() => {
-    jest.clearAllMocks();
+    logSpy = jest.spyOn(console, 'log');
+    errorSpy = jest.spyOn(console, 'error');
+  });
+
+  afterEach(() => {
+    logSpy.mockRestore();
+    errorSpy.mockRestore();
+    process.env = originalProcessEnv;
+  });
+
+  it('should get USERPROFILE for windows user', () => {
+    process.env = { ...originalProcessEnv, HOME: null, USERPROFILE: 'Users/windows' };
+    expect(directoryPath).toBe('Users/windows/.one-app');
   });
 
   describe('showCacheInfo', () => {
     it('should log file size in MB and instructions on how to delete the cache', () => {
       fs.stat.mockImplementationOnce((_filePath, cb) => cb(null, { size: 1024 * 1024 }));
       showCacheInfo();
-      expect(console.log).toHaveBeenCalledWith(`File size of ${fileName}: 1.00 MB`);
-      expect(console.log).toHaveBeenCalledWith(`To delete cache, please run \n rm ${filePath}`);
+      expect(logSpy).toHaveBeenCalledWith(`File size of ${fileName}: 1.00 MB`);
+      expect(logSpy).toHaveBeenCalledWith(`To delete cache, please run \n rm ${filePath}`);
     });
 
     it('should log error when unable to check file stat', () => {
       const error = new Error('Cannot access file');
       fs.stat.mockImplementationOnce((_filePath, cb) => cb(error, null));
       showCacheInfo();
-      expect(console.error).toHaveBeenCalledWith('There was error checking file stat', error);
+      expect(errorSpy).toHaveBeenCalledWith('There was error checking file stat', error);
     });
   });
 
   describe('setupCacheFile', () => {
     beforeEach(() => {
       jest.clearAllMocks();
+      fs.mkdir.mockRestore();
+      fs.writeFileSync.mockRestore();
     });
 
     it('should log success message when directory and file are created', () => {
@@ -51,9 +62,9 @@ describe('Cache module', () => {
 
       setupCacheFile();
 
-      expect(console.log).toHaveBeenCalledWith(`Successfully created ${directoryPath}`);
-      expect(console.log).toHaveBeenCalledWith(`Creating ${fileName}`);
-      expect(console.log).toHaveBeenCalledWith(`${fileName} created successfully on ${filePath}`);
+      expect(logSpy).toHaveBeenCalledWith(`Successfully created ${directoryPath}`);
+      expect(logSpy).toHaveBeenCalledWith(`Creating ${fileName}`);
+      expect(logSpy).toHaveBeenCalledWith(`${fileName} created successfully on ${filePath}`);
     });
 
     it('should log error when unable to create a directory', () => {
@@ -61,7 +72,8 @@ describe('Cache module', () => {
       fs.writeFileSync.mockImplementationOnce(() => {});
 
       setupCacheFile();
-      expect(console.error).toHaveBeenCalledWith(`There was error creating ${directoryName} directory`);
+      expect(errorSpy).toHaveBeenCalledWith(`There was error creating ${directoryName} directory`);
+      fs.mkdir.mockRestore();
     });
 
     it('should log error when unable to create a file', () => {
@@ -70,7 +82,7 @@ describe('Cache module', () => {
       fs.mkdir.mockImplementationOnce((_filePath, options, cb) => cb(null));
       fs.writeFileSync.mockImplementationOnce(() => { throw error; });
       setupCacheFile();
-      expect(console.error).toHaveBeenCalledWith(`Error creating ${fileName} on ${filePath}, \n${error}`);
+      expect(errorSpy).toHaveBeenCalledWith(`Error creating ${fileName} on ${filePath}, \n${error}`);
     });
   });
 
@@ -90,8 +102,8 @@ describe('Cache module', () => {
 
       const result = getCachedModules();
 
-      expect(console.log).toHaveBeenCalledWith(`Successfully created ${directoryPath}`);
-      expect(console.log).toHaveBeenCalledWith(`${fileName} created successfully on ${filePath}`);
+      expect(logSpy).toHaveBeenCalledWith(`Successfully created ${directoryPath}`);
+      expect(logSpy).toHaveBeenCalledWith(`${fileName} created successfully on ${filePath}`);
       expect(result).toEqual({});
     });
 
@@ -107,7 +119,7 @@ describe('Cache module', () => {
       } catch (err) {
         error = err;
       }
-      expect(console.error).toHaveBeenCalledWith('Could not parse JSON content', error);
+      expect(errorSpy).toHaveBeenCalledWith('Could not parse JSON content', error);
       expect(result).toEqual({});
     });
 
@@ -121,6 +133,41 @@ describe('Cache module', () => {
       expect(result).toEqual(JSON.parse(validJSON));
     });
   });
-});
 
-/* eslint-enable no-console -- because eslint-comments/disable-enable-pair */
+  describe('setOnCache', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should set content on cache after a delay', () => {
+      fs.writeFile.mockImplementation((_filePath, content, callback) => callback(null));
+
+      const content = { module: 'test' };
+      setOnCache(content);
+
+      expect(fs.writeFile).not.toHaveBeenCalled();
+
+      jest.runAllTimers();
+
+      expect(fs.writeFile).toHaveBeenCalled();
+      expect(fs.writeFile.mock.calls[0][1]).toBe(JSON.stringify(content, null, 2));
+    });
+
+    it('should handle error when writing to file fails', () => {
+      const error = new Error('write error');
+      fs.writeFile.mockImplementation((_filePath, content, callback) => callback(error));
+
+      const content = { module: 'test' };
+      setOnCache(content);
+
+      jest.runAllTimers();
+
+      expect(fs.writeFile).toHaveBeenCalled();
+      expect(logSpy).toHaveBeenCalledWith(`There was an error updating content \n ${error}`);
+    });
+  });
+});

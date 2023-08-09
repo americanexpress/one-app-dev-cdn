@@ -30,7 +30,10 @@ const pathToCache = path.join(__dirname, '..', '.cache');
 const mockLocalDevPublicPath = path.join(pathToStubs, 'public');
 
 jest.mock('got');
-jest.mock('../src/util');
+jest.mock('../src/util', () => ({
+  getCachedModules: jest.fn(() => ({})),
+  setOnCache: jest.fn(() => ({})),
+}));
 
 const origNodeEnv = process.env.NODE_ENV;
 
@@ -139,7 +142,7 @@ describe('one-app-dev-cdn', () => {
     jest
       .resetAllMocks()
       .resetModules();
-
+    getCachedModules.mockImplementation(() => ({}));
     got.mockImplementation((url) => Promise.reject(new Error(`no mock for ${url} set up`)));
   });
 
@@ -505,16 +508,12 @@ describe('one-app-dev-cdn', () => {
   });
 
   describe('modules', () => {
-    beforeEach(() => {
-      getCachedModules.mockImplementation(() => ({}));
-    });
-
-    it('gets local modules', async () => {
-      // expect.assertions(3);
+    it('gets local modules', () => {
+      expect.assertions(3);
 
       const fcdn = setupTest({ useLocalModules: true, appPort: 3000 });
 
-      await supertest(fcdn)
+      return supertest(fcdn)
         .get('/modules/module-a/1.0.0/module-a.browser.js?key="123')
         .then((response) => {
           expect(response.status).toBe(200);
@@ -524,7 +523,7 @@ describe('one-app-dev-cdn', () => {
     });
 
     it('gets remote modules', async () => {
-      // expect.assertions(7);
+      expect.assertions(7);
 
       const fcdn = setupTest({
         useLocalModules: false,
@@ -545,7 +544,7 @@ describe('one-app-dev-cdn', () => {
 
       const moduleResponse = await supertest(fcdn)
         .get('/cdn/module-b/1.0.0/module-b.node.js?key="123');
-      expect(moduleResponse.status).toBe(500);
+      expect(moduleResponse.status).toBe(200);
       expect(moduleResponse.header['content-type']).toMatch(/^application\/javascript/);
       expect(moduleResponse.text).toBe('console.log("a");');
       expect(got.mock.calls).toEqual([

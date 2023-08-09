@@ -1,11 +1,7 @@
 import path from 'path';
 import fs from 'fs';
-import Lumberjack, { monkeypatches } from '@americanexpress/lumberjack';
-
-const logger = new Lumberjack();
-monkeypatches.replaceGlobalConsole(logger);
-
 /* eslint-disable no-console -- console used in tests */
+const chalk = require('chalk');
 
 const userHomeDirectory = process.env.HOME || process.env.USERPROFILE;
 export const fileName = '.one-app-module-cache';
@@ -20,8 +16,13 @@ export const showCacheInfo = () => {
       console.error('There was error checking file stat', error);
     } else {
       const fileSizeOnMB = stats.size / (1024 * 1024); // bytes to mb
-      console.log(`File size of ${fileName}: ${fileSizeOnMB.toFixed(2)} MB`);
-      console.log(`To delete cache, please run \n rm ${filePath}`);
+      const message = `File size of ${fileName}: ${chalk.bold.greenBright(fileSizeOnMB.toFixed(2), 'MB')} `;
+      const separator = '*'.repeat(message.length);
+      console.log(chalk.bold.cyanBright(separator));
+      console.log(chalk.bold.redBright('CACHE INFORMATION'));
+      console.log(message);
+      console.log(`To delete cache, please run \n  ${chalk.bold.redBright('  rm ', filePath)}`);
+      console.log(chalk.bold.cyanBright(separator));
     }
   });
 };
@@ -79,14 +80,17 @@ export const setOnCache = (content, delay = 500) => {
   }, delay);
 };
 
-export const removeModuleFromCache = (url, _cachedModules, moduleNames) => {
-  const updatedCachedModules = _cachedModules;
-  moduleNames.forEach((moduleName) => {
-    if (url.match(new RegExp(`\\b\\/${moduleName}\\/\\b`))) {
-      delete updatedCachedModules[url];
-      console.log(`Deleted ${url} from cache`);
-    }
-  });
+export const removeModuleFromCache = (url, cachedModules, moduleNames) => {
+  const updatedCachedModules = cachedModules;
+  const matchingModule = moduleNames.find((moduleName) => url.match(new RegExp(`\\b\\/${moduleName}\\/\\b`)));
+  if (matchingModule) {
+    Object.keys(cachedModules).forEach((cachedModuleKey) => {
+      if (cachedModuleKey.match(new RegExp(`\\b\\/${matchingModule}\\/\\b`))) {
+        delete updatedCachedModules[cachedModuleKey];
+        console.log(`Deleted ${cachedModuleKey} from cache`);
+      }
+    });
+  }
   return updatedCachedModules;
 };
 

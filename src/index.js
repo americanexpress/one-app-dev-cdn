@@ -32,9 +32,8 @@ const cachedModules = getCachedModules();
 const getLocalModuleMap = ({ pathToModuleMap, oneAppDevCdnAddress }) => {
   const moduleMap = JSON.parse(fs.readFileSync(pathToModuleMap, 'utf8').toString());
   Object.keys(moduleMap.modules).forEach((moduleName) => {
-    const module = moduleMap.modules[moduleName];
-    // push module name to modulenames array
     moduleNames.push(moduleName);
+    const module = moduleMap.modules[moduleName];
     module.browser.url = module.browser.url.replace('[one-app-dev-cdn-url]', oneAppDevCdnAddress);
     module.legacyBrowser.url = module.legacyBrowser.url.replace('[one-app-dev-cdn-url]', oneAppDevCdnAddress);
     module.node.url = module.node.url.replace('[one-app-dev-cdn-url]', oneAppDevCdnAddress);
@@ -178,6 +177,7 @@ const oneAppDevCdnFactory = ({
         remoteModuleBaseUrls
       );
       const remoteModuleBaseUrlOrigin = new URL(knownRemoteModuleBaseUrl).origin;
+
       if (cachedModules[incomingRequestPath]) {
         return res
           .status(200)
