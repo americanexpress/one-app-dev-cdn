@@ -1,8 +1,10 @@
 import fs from 'fs';
 
 import {
+  getUserHomeDirectory,
   getCachedModules,
   setOnCache,
+  removeModuleFromCache,
   showCacheInfo,
   setupCacheFile,
   fileName,
@@ -16,36 +18,56 @@ jest.mock('fs');
 describe('Cache module utils', () => {
   let logSpy;
   let errorSpy;
-  const originalProcessEnv = process.env;
+
   beforeEach(() => {
     logSpy = jest.spyOn(console, 'log');
     errorSpy = jest.spyOn(console, 'error');
+    process.env.HOME = '';
   });
 
   afterEach(() => {
     logSpy.mockRestore();
     errorSpy.mockRestore();
-    process.env = originalProcessEnv;
   });
 
   it('should get USERPROFILE for windows user', () => {
-    process.env = { ...originalProcessEnv, HOME: null, USERPROFILE: 'Users/windows' };
-    expect(directoryPath).toBe('Users/windows/.one-app');
+    delete process.env.HOME;
+    process.env.USERPROFILE = 'Users/windows';
+    expect(getUserHomeDirectory()).toBe('Users/windows');
   });
 
   describe('showCacheInfo', () => {
-    it('should log file size in MB and instructions on how to delete the cache', () => {
-      fs.stat.mockImplementationOnce((_filePath, cb) => cb(null, { size: 1024 * 1024 }));
-      showCacheInfo();
-      expect(logSpy).toHaveBeenCalledWith(`File size of ${fileName}: 1.00 MB`);
-      expect(logSpy).toHaveBeenCalledWith(`To delete cache, please run \n rm ${filePath}`);
+    beforeEach(() => {
+      jest.clearAllMocks();
     });
 
-    it('should log error when unable to check file stat', () => {
-      const error = new Error('Cannot access file');
-      fs.stat.mockImplementationOnce((_filePath, cb) => cb(error, null));
+    it('should display the cache info when there is no error', () => {
+      const mockStats = {
+        size: 1048576 * 5, // 5 MB
+      };
+
+      fs.stat.mockImplementation((path, callback) => {
+        callback(null, mockStats);
+      });
+
       showCacheInfo();
-      expect(errorSpy).toHaveBeenCalledWith('There was error checking file stat', error);
+
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('CACHE INFORMATION'));
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('File size of'));
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('5.00 MB'));
+      expect(errorSpy).not.toHaveBeenCalled();
+    });
+
+    it('should display an error when there is an error checking file stats', () => {
+      const mockError = new Error('Test error');
+
+      fs.stat.mockImplementation((path, callback) => {
+        callback(mockError, null);
+      });
+
+      showCacheInfo();
+
+      expect(errorSpy).toHaveBeenCalledWith('There was error checking file stat', mockError);
     });
   });
 
@@ -168,6 +190,82 @@ describe('Cache module utils', () => {
 
       expect(fs.writeFile).toHaveBeenCalled();
       expect(logSpy).toHaveBeenCalledWith(`There was an error updating content \n ${error}`);
+    });
+  });
+
+  describe('removeModuleFromCache', () => {
+    it('should remove all matched module entries from cache', () => {
+      const url = '/api/v1/moduleA/endpoint';
+      const modules = {
+        '/api/v1/moduleA/endpoint': 'dataA',
+        '/api/v1/moduleA/anotherEndpoint': 'dataA1',
+        '/api/v1/moduleB/endpoint': 'dataB',
+      };
+      const moduleNames = ['moduleA', 'moduleC'];
+
+      const result = removeModuleFromCache(url, modules, moduleNames);
+
+      expect(result['/api/v1/moduleA/endpoint']).toBeUndefined();
+      expect(result['/api/v1/moduleA/anotherEndpoint']).toBeUndefined();
+      expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
+    });
+
+    it('should not remove non-matched module entries from cache', () => {
+      const url = '/api/v1/moduleX/endpoint';
+      const modules = {
+        '/api/v1/moduleA/endpoint': 'dataA',
+        '/api/v1/moduleB/endpoint': 'dataB',
+      };
+      const moduleNames = ['moduleA', 'moduleC'];
+
+      const result = removeModuleFromCache(url, modules, moduleNames);
+
+      expect(result['/api/v1/moduleA/endpoint']).toBeDefined();
+      expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
+    });
+
+    it('should handle empty moduleNames', () => {
+      const url = '/api/v1/moduleA/endpoint';
+      const modules = {
+        '/api/v1/moduleA/endpoint': 'dataA',
+        '/api/v1/moduleB/endpoint': 'dataB',
+      };
+      const moduleNames = [];
+
+      const result = removeModuleFromCache(url, modules, moduleNames);
+
+      expect(result['/api/v1/moduleA/endpoint']).toBeDefined();
+      expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
+    });
+
+    it('should handle URL not in cache', () => {
+      const url = '/api/v1/moduleZ/endpoint';
+      const modules = {
+        '/api/v1/moduleA/endpoint': 'dataA',
+        '/api/v1/moduleB/endpoint': 'dataB',
+      };
+      const moduleNames = ['moduleA', 'moduleZ'];
+
+      const result = removeModuleFromCache(url, modules, moduleNames);
+
+      expect(result['/api/v1/moduleA/endpoint']).toBeDefined();
+      expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
+      expect(result['/api/v1/moduleZ/endpoint']).toBeUndefined();
+    });
+
+    // Edge cases:
+    it('should handle non-matching URL but with module in cache', () => {
+      const url = '/api/v1/moduleZ/endpoint';
+      const modules = {
+        '/api/v1/moduleA/endpoint': 'dataA',
+        '/api/v1/moduleB/endpoint': 'dataB',
+      };
+      const moduleNames = ['moduleA', 'moduleC'];
+
+      const result = removeModuleFromCache(url, modules, moduleNames);
+
+      expect(result['/api/v1/moduleA/endpoint']).toBeDefined();
+      expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
     });
   });
 });

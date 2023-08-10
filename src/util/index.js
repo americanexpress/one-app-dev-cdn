@@ -3,10 +3,10 @@ import fs from 'fs';
 /* eslint-disable no-console -- console used in tests */
 const chalk = require('chalk');
 
-const userHomeDirectory = process.env.HOME || process.env.USERPROFILE;
+export const getUserHomeDirectory = () => process.env.HOME || process.env.USERPROFILE;
 export const fileName = '.one-app-module-cache';
 export const directoryName = '.one-app';
-export const directoryPath = path.join(userHomeDirectory, directoryName);
+export const directoryPath = path.join(getUserHomeDirectory(), directoryName);
 export const filePath = path.join(directoryPath, fileName);
 
 // show cache size and how to delete info on start
@@ -16,7 +16,7 @@ export const showCacheInfo = () => {
       console.error('There was error checking file stat', error);
     } else {
       const fileSizeOnMB = stats.size / (1024 * 1024); // bytes to mb
-      const message = `File size of ${fileName}: ${chalk.bold.greenBright(fileSizeOnMB.toFixed(2), 'MB')} `;
+      const message = `File size of ${fileName}: ${chalk.bold.greenBright(fileSizeOnMB.toFixed(2), 'MB')}`;
       const separator = '*'.repeat(message.length);
       console.log(chalk.bold.cyanBright(separator));
       console.log(chalk.bold.redBright('CACHE INFORMATION'));
@@ -81,16 +81,19 @@ export const setOnCache = (content, delay = 500) => {
 };
 
 export const removeModuleFromCache = (url, cachedModules, moduleNames) => {
-  const updatedCachedModules = cachedModules;
   const matchingModule = moduleNames.find((moduleName) => url.match(new RegExp(`\\b\\/${moduleName}\\/\\b`)));
-  if (matchingModule) {
-    Object.keys(cachedModules).forEach((cachedModuleKey) => {
-      if (cachedModuleKey.match(new RegExp(`\\b\\/${matchingModule}\\/\\b`))) {
-        delete updatedCachedModules[cachedModuleKey];
-        console.log(`Deleted ${cachedModuleKey} from cache`);
-      }
-    });
-  }
+
+  if (!matchingModule) return { ...cachedModules };
+
+  const updatedCachedModules = Object.keys(cachedModules).reduce((acc, cachedModuleKey) => {
+    if (cachedModuleKey.match(new RegExp(`\\b\\/${matchingModule}\\/\\b`))) {
+      console.log(`Deleted ${cachedModuleKey} from cache`);
+    } else {
+      acc[cachedModuleKey] = cachedModules[cachedModuleKey];
+    }
+    return acc;
+  }, {});
+
   return updatedCachedModules;
 };
 

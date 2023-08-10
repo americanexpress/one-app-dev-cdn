@@ -33,6 +33,7 @@ jest.mock('got');
 jest.mock('../src/util', () => ({
   getCachedModules: jest.fn(() => ({})),
   setOnCache: jest.fn(() => ({})),
+  removeModuleFromCache: jest.fn(() => ({})),
 }));
 
 const origNodeEnv = process.env.NODE_ENV;
