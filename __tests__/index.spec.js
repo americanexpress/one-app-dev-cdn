@@ -23,7 +23,7 @@ import path from 'path';
 import mkdirp from 'mkdirp';
 import ProxyAgent from 'proxy-agent';
 import oneAppDevCdn from '../src';
-import { getCachedModules } from '../src/util';
+import { removeModuleFromCache } from '../src/util';
 
 const pathToStubs = path.join(__dirname, 'stubs');
 const pathToCache = path.join(__dirname, '..', '.cache');
@@ -31,7 +31,9 @@ const mockLocalDevPublicPath = path.join(pathToStubs, 'public');
 
 jest.mock('got');
 jest.mock('../src/util', () => ({
-  getCachedModules: jest.fn(() => ({})),
+  getCachedModules: jest.fn(() => ({
+    '/cdn/module-b/1.0.0/module-c.node.js': 'console.log("c");',
+  })),
   setOnCache: jest.fn(() => ({})),
   removeModuleFromCache: jest.fn(() => ({})),
 }));
@@ -143,7 +145,7 @@ describe('one-app-dev-cdn', () => {
     jest
       .resetAllMocks()
       .resetModules();
-    getCachedModules.mockImplementation(() => ({}));
+    removeModuleFromCache.mockImplementation(() => ({}));
     got.mockImplementation((url) => Promise.reject(new Error(`no mock for ${url} set up`)));
   });
 
@@ -521,6 +523,32 @@ describe('one-app-dev-cdn', () => {
           expect(response.header['content-type']).toMatch(/^application\/javascript/);
           expect(response.text).toBe('console.log("a");');
         });
+    });
+
+    it('gets remote modules from cached data if incoming url is matching', async () => {
+      expect.assertions(6);
+      const fcdn = setupTest({
+        useLocalModules: false,
+        appPort: 3000,
+        remoteModuleMapUrl: 'https://example.com/module-map.json',
+      });
+      got.mockReturnJsonOnce(defaultRemoteMap);
+      got.mockReturnFileOnce('console.log("a");');
+
+      const moduleMapResponse = await supertest(fcdn)
+        .get('/module-map.json');
+
+      expect(moduleMapResponse.status).toBe(200);
+      expect(moduleMapResponse.header['content-type']).toMatch(/^application\/json/);
+      expect(
+        sanitizeModuleMapForSnapshot(moduleMapResponse.text)
+      ).toMatchSnapshot('module map response');
+
+      const moduleResponse = await supertest(fcdn)
+        .get('/cdn/module-b/1.0.0/module-c.node.js?key="123');
+      expect(moduleResponse.status).toBe(200);
+      expect(moduleResponse.header['content-type']).toMatch(/^application\/javascript/);
+      expect(moduleResponse.text).toBe('console.log("c");');
     });
 
     it('gets remote modules', async () => {
