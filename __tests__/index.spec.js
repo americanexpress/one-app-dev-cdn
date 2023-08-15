@@ -23,7 +23,7 @@ import path from 'path';
 import mkdirp from 'mkdirp';
 import ProxyAgent from 'proxy-agent';
 import oneAppDevCdn from '../src';
-import { removeModuleFromCache } from '../src/util';
+import { optimizeCache } from '../src/util';
 
 const pathToStubs = path.join(__dirname, 'stubs');
 const pathToCache = path.join(__dirname, '..', '.cache');
@@ -35,7 +35,7 @@ jest.mock('../src/util', () => ({
     '/cdn/module-b/1.0.0/module-c.node.js': 'console.log("c");',
   })),
   setOnCache: jest.fn(() => ({})),
-  removeModuleFromCache: jest.fn(() => ({})),
+  optimizeCache: jest.fn(() => ({})),
 }));
 
 const origNodeEnv = process.env.NODE_ENV;
@@ -145,7 +145,7 @@ describe('one-app-dev-cdn', () => {
     jest
       .resetAllMocks()
       .resetModules();
-    removeModuleFromCache.mockImplementation(() => ({}));
+    optimizeCache.mockImplementation(() => ({}));
     got.mockImplementation((url) => Promise.reject(new Error(`no mock for ${url} set up`)));
   });
 

@@ -4,7 +4,7 @@ import {
   getUserHomeDirectory,
   getCachedModules,
   setOnCache,
-  removeModuleFromCache,
+  optimizeCache,
   showCacheInfo,
   setupCacheFile,
   fileName,
@@ -193,7 +193,7 @@ describe('Cache module utils', () => {
     });
   });
 
-  describe('removeModuleFromCache', () => {
+  describe('optimizeCache', () => {
     it('should remove all matched module entries from cache', () => {
       const url = '/api/v1/moduleA/endpoint';
       const modules = {
@@ -203,7 +203,7 @@ describe('Cache module utils', () => {
       };
       const moduleNames = ['moduleA', 'moduleC'];
 
-      const result = removeModuleFromCache(url, modules, moduleNames);
+      const result = optimizeCache(url, modules, moduleNames);
 
       expect(result['/api/v1/moduleA/endpoint']).toBeUndefined();
       expect(result['/api/v1/moduleA/anotherEndpoint']).toBeUndefined();
@@ -218,7 +218,7 @@ describe('Cache module utils', () => {
       };
       const moduleNames = ['moduleA', 'moduleC'];
 
-      const result = removeModuleFromCache(url, modules, moduleNames);
+      const result = optimizeCache(url, modules, moduleNames);
 
       expect(result['/api/v1/moduleA/endpoint']).toBeDefined();
       expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
@@ -232,7 +232,7 @@ describe('Cache module utils', () => {
       };
       const moduleNames = [];
 
-      const result = removeModuleFromCache(url, modules, moduleNames);
+      const result = optimizeCache(url, modules, moduleNames);
 
       expect(result['/api/v1/moduleA/endpoint']).toBeDefined();
       expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
@@ -246,7 +246,7 @@ describe('Cache module utils', () => {
       };
       const moduleNames = ['moduleA', 'moduleZ'];
 
-      const result = removeModuleFromCache(url, modules, moduleNames);
+      const result = optimizeCache(url, modules, moduleNames);
 
       expect(result['/api/v1/moduleA/endpoint']).toBeDefined();
       expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
@@ -262,7 +262,7 @@ describe('Cache module utils', () => {
       };
       const moduleNames = ['moduleA', 'moduleC'];
 
-      const result = removeModuleFromCache(url, modules, moduleNames);
+      const result = optimizeCache(url, modules, moduleNames);
 
       expect(result['/api/v1/moduleA/endpoint']).toBeDefined();
       expect(result['/api/v1/moduleB/endpoint']).toBeDefined();

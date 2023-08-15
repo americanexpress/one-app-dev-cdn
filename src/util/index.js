@@ -80,7 +80,7 @@ export const setOnCache = (content, delay = 500) => {
   }, delay);
 };
 
-export const removeModuleFromCache = (url, cachedModules, moduleNames) => {
+export const optimizeCache = (url, cachedModules, moduleNames) => {
   const matchingModule = moduleNames.find((moduleName) => url.match(new RegExp(`\\b\\/${moduleName}\\/\\b`)));
 
   if (!matchingModule) return { ...cachedModules };

@@ -24,7 +24,7 @@ import compression from 'compression';
 import cors from 'cors';
 import ip from 'ip';
 import ProxyAgent from 'proxy-agent';
-import { getCachedModules, setOnCache, removeModuleFromCache } from './util';
+import { getCachedModules, setOnCache, optimizeCache } from './util';
 
 const moduleNames = [];
 const cachedModules = getCachedModules();
@@ -193,7 +193,7 @@ const oneAppDevCdnFactory = ({
         },
       })
         .then((remoteModuleResponse) => {
-          const updatedCachedModules = removeModuleFromCache(
+          const updatedCachedModules = optimizeCache(
             incomingRequestPath,
             cachedModules,
             moduleNames
