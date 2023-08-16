@@ -24,15 +24,14 @@ import compression from 'compression';
 import cors from 'cors';
 import ip from 'ip';
 import ProxyAgent from 'proxy-agent';
-import { getCachedModules, setOnCache, optimizeCache } from './util';
+import { getCachedModules, writeToCache, removeDuplicatedModules } from './util';
 
-const moduleNames = [];
+let moduleNames = [];
 const cachedModules = getCachedModules();
 
 const getLocalModuleMap = ({ pathToModuleMap, oneAppDevCdnAddress }) => {
   const moduleMap = JSON.parse(fs.readFileSync(pathToModuleMap, 'utf8').toString());
   Object.keys(moduleMap.modules).forEach((moduleName) => {
-    moduleNames.push(moduleName);
     const module = moduleMap.modules[moduleName];
     module.browser.url = module.browser.url.replace('[one-app-dev-cdn-url]', oneAppDevCdnAddress);
     module.legacyBrowser.url = module.legacyBrowser.url.replace('[one-app-dev-cdn-url]', oneAppDevCdnAddress);
@@ -158,6 +157,7 @@ const oneAppDevCdnFactory = ({
             ...localMap.modules,
           },
         };
+        moduleNames = Object.keys(map.modules);
         response
           .status(200)
           .send(map);
@@ -193,13 +193,13 @@ const oneAppDevCdnFactory = ({
         },
       })
         .then((remoteModuleResponse) => {
-          const updatedCachedModules = optimizeCache(
+          const updatedCachedModules = removeDuplicatedModules(
             incomingRequestPath,
             cachedModules,
             moduleNames
           );
           updatedCachedModules[incomingRequestPath] = remoteModuleResponse.body;
-          setOnCache(updatedCachedModules);
+          writeToCache(updatedCachedModules);
           return res
             .status(res.statusCode)
             .type(path.extname(req.path))

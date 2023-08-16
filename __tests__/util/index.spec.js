@@ -3,14 +3,14 @@ import fs from 'fs';
 import {
   getUserHomeDirectory,
   getCachedModules,
-  setOnCache,
-  optimizeCache,
+  writeToCache,
+  removeDuplicatedModules,
   showCacheInfo,
   setupCacheFile,
-  fileName,
-  directoryName,
-  directoryPath,
-  filePath,
+  cacheFileName,
+  oneAppDirectoryName,
+  oneAppDirectoryPath,
+  oneAppModuleCachePath,
 } from '../../src/util';
 
 jest.mock('fs');
@@ -84,9 +84,9 @@ describe('Cache module utils', () => {
 
       setupCacheFile();
 
-      expect(logSpy).toHaveBeenCalledWith(`Successfully created ${directoryPath}`);
-      expect(logSpy).toHaveBeenCalledWith(`Creating ${fileName}`);
-      expect(logSpy).toHaveBeenCalledWith(`${fileName} created successfully on ${filePath}`);
+      expect(logSpy).toHaveBeenCalledWith(`Successfully created ${oneAppDirectoryPath}`);
+      expect(logSpy).toHaveBeenCalledWith(`Creating ${cacheFileName}`);
+      expect(logSpy).toHaveBeenCalledWith(`${cacheFileName} created successfully on ${oneAppModuleCachePath}`);
     });
 
     it('should log error when unable to create a directory', () => {
@@ -94,7 +94,7 @@ describe('Cache module utils', () => {
       fs.writeFileSync.mockImplementationOnce(() => {});
 
       setupCacheFile();
-      expect(errorSpy).toHaveBeenCalledWith(`There was error creating ${directoryName} directory`);
+      expect(errorSpy).toHaveBeenCalledWith(`There was error creating ${oneAppDirectoryName} directory`);
       fs.mkdir.mockRestore();
     });
 
@@ -104,7 +104,7 @@ describe('Cache module utils', () => {
       fs.mkdir.mockImplementationOnce((_filePath, options, cb) => cb(null));
       fs.writeFileSync.mockImplementationOnce(() => { throw error; });
       setupCacheFile();
-      expect(errorSpy).toHaveBeenCalledWith(`Error creating ${fileName} on ${filePath}, \n${error}`);
+      expect(errorSpy).toHaveBeenCalledWith(`Error creating ${cacheFileName} on ${oneAppModuleCachePath}, \n${error}`);
     });
   });
 
@@ -124,8 +124,8 @@ describe('Cache module utils', () => {
 
       const result = getCachedModules();
 
-      expect(logSpy).toHaveBeenCalledWith(`Successfully created ${directoryPath}`);
-      expect(logSpy).toHaveBeenCalledWith(`${fileName} created successfully on ${filePath}`);
+      expect(logSpy).toHaveBeenCalledWith(`Successfully created ${oneAppDirectoryPath}`);
+      expect(logSpy).toHaveBeenCalledWith(`${cacheFileName} created successfully on ${oneAppModuleCachePath}`);
       expect(result).toEqual({});
     });
 
@@ -156,7 +156,7 @@ describe('Cache module utils', () => {
     });
   });
 
-  describe('setOnCache', () => {
+  describe('writeToCache', () => {
     beforeEach(() => {
       jest.useFakeTimers();
     });
@@ -169,7 +169,7 @@ describe('Cache module utils', () => {
       fs.writeFile.mockImplementation((_filePath, content, callback) => callback(null));
 
       const content = { module: 'test' };
-      setOnCache(content);
+      writeToCache(content);
 
       expect(fs.writeFile).not.toHaveBeenCalled();
 
@@ -184,7 +184,7 @@ describe('Cache module utils', () => {
       fs.writeFile.mockImplementation((_filePath, content, callback) => callback(error));
 
       const content = { module: 'test' };
-      setOnCache(content);
+      writeToCache(content);
 
       jest.runAllTimers();
 
@@ -193,7 +193,7 @@ describe('Cache module utils', () => {
     });
   });
 
-  describe('optimizeCache', () => {
+  describe('removeDuplicatedModules', () => {
     it('should remove all matched module entries from cache', () => {
       const url = '/api/v1/moduleA/endpoint';
       const modules = {
@@ -203,7 +203,7 @@ describe('Cache module utils', () => {
       };
       const moduleNames = ['moduleA', 'moduleC'];
 
-      const result = optimizeCache(url, modules, moduleNames);
+      const result = removeDuplicatedModules(url, modules, moduleNames);
 
       expect(result['/api/v1/moduleA/endpoint']).toBeUndefined();
       expect(result['/api/v1/moduleA/anotherEndpoint']).toBeUndefined();
@@ -218,7 +218,7 @@ describe('Cache module utils', () => {
       };
       const moduleNames = ['moduleA', 'moduleC'];
 
-      const result = optimizeCache(url, modules, moduleNames);
+      const result = removeDuplicatedModules(url, modules, moduleNames);
 
       expect(result['/api/v1/moduleA/endpoint']).toBeDefined();
       expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
@@ -232,7 +232,7 @@ describe('Cache module utils', () => {
       };
       const moduleNames = [];
 
-      const result = optimizeCache(url, modules, moduleNames);
+      const result = removeDuplicatedModules(url, modules, moduleNames);
 
       expect(result['/api/v1/moduleA/endpoint']).toBeDefined();
       expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
@@ -246,7 +246,7 @@ describe('Cache module utils', () => {
       };
       const moduleNames = ['moduleA', 'moduleZ'];
 
-      const result = optimizeCache(url, modules, moduleNames);
+      const result = removeDuplicatedModules(url, modules, moduleNames);
 
       expect(result['/api/v1/moduleA/endpoint']).toBeDefined();
       expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
@@ -262,7 +262,7 @@ describe('Cache module utils', () => {
       };
       const moduleNames = ['moduleA', 'moduleC'];
 
-      const result = optimizeCache(url, modules, moduleNames);
+      const result = removeDuplicatedModules(url, modules, moduleNames);
 
       expect(result['/api/v1/moduleA/endpoint']).toBeDefined();
       expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
