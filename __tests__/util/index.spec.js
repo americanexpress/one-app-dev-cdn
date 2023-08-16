@@ -194,78 +194,38 @@ describe('Cache module utils', () => {
   });
 
   describe('removeDuplicatedModules', () => {
-    it('should remove all matched module entries from cache', () => {
-      const url = '/api/v1/moduleA/endpoint';
-      const modules = {
-        '/api/v1/moduleA/endpoint': 'dataA',
-        '/api/v1/moduleA/anotherEndpoint': 'dataA1',
-        '/api/v1/moduleB/endpoint': 'dataB',
+    it('removes the matching modules from cachedModules', () => {
+      const url = '/somepath/moduleA/someotherpath';
+      const cachedModules = {
+        '/path/to/moduleA/1': 'data',
+        '/path/to/moduleA/2': 'data',
+        '/path/to/moduleB/1': 'data',
       };
-      const moduleNames = ['moduleA', 'moduleC'];
+      const moduleNames = ['moduleA', 'moduleB', 'moduleC'];
 
-      const result = removeDuplicatedModules(url, modules, moduleNames);
+      const result = removeDuplicatedModules(url, cachedModules, moduleNames);
 
-      expect(result['/api/v1/moduleA/endpoint']).toBeUndefined();
-      expect(result['/api/v1/moduleA/anotherEndpoint']).toBeUndefined();
-      expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
+      expect(result).toEqual({
+        '/path/to/moduleB/1': 'data',
+      });
+
+      expect(logSpy).toHaveBeenCalledWith('Deleted /path/to/moduleA/1 from cache');
+      expect(logSpy).toHaveBeenCalledWith('Deleted /path/to/moduleA/2 from cache');
     });
 
-    it('should not remove non-matched module entries from cache', () => {
-      const url = '/api/v1/moduleX/endpoint';
-      const modules = {
-        '/api/v1/moduleA/endpoint': 'dataA',
-        '/api/v1/moduleB/endpoint': 'dataB',
+    it('returns cachedModules unchanged if no module matches', () => {
+      const url = '/somepath/moduleX/someotherpath';
+      const cachedModules = {
+        '/path/to/moduleA/1': 'data',
+        '/path/to/moduleA/2': 'data',
+        '/path/to/moduleB/1': 'data',
       };
-      const moduleNames = ['moduleA', 'moduleC'];
+      const moduleNames = ['moduleA', 'moduleB', 'moduleC'];
 
-      const result = removeDuplicatedModules(url, modules, moduleNames);
+      const result = removeDuplicatedModules(url, cachedModules, moduleNames);
 
-      expect(result['/api/v1/moduleA/endpoint']).toBeDefined();
-      expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
-    });
-
-    it('should handle empty moduleNames', () => {
-      const url = '/api/v1/moduleA/endpoint';
-      const modules = {
-        '/api/v1/moduleA/endpoint': 'dataA',
-        '/api/v1/moduleB/endpoint': 'dataB',
-      };
-      const moduleNames = [];
-
-      const result = removeDuplicatedModules(url, modules, moduleNames);
-
-      expect(result['/api/v1/moduleA/endpoint']).toBeDefined();
-      expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
-    });
-
-    it('should handle URL not in cache', () => {
-      const url = '/api/v1/moduleZ/endpoint';
-      const modules = {
-        '/api/v1/moduleA/endpoint': 'dataA',
-        '/api/v1/moduleB/endpoint': 'dataB',
-      };
-      const moduleNames = ['moduleA', 'moduleZ'];
-
-      const result = removeDuplicatedModules(url, modules, moduleNames);
-
-      expect(result['/api/v1/moduleA/endpoint']).toBeDefined();
-      expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
-      expect(result['/api/v1/moduleZ/endpoint']).toBeUndefined();
-    });
-
-    // Edge cases:
-    it('should handle non-matching URL but with module in cache', () => {
-      const url = '/api/v1/moduleZ/endpoint';
-      const modules = {
-        '/api/v1/moduleA/endpoint': 'dataA',
-        '/api/v1/moduleB/endpoint': 'dataB',
-      };
-      const moduleNames = ['moduleA', 'moduleC'];
-
-      const result = removeDuplicatedModules(url, modules, moduleNames);
-
-      expect(result['/api/v1/moduleA/endpoint']).toBeDefined();
-      expect(result['/api/v1/moduleB/endpoint']).toBeDefined();
+      expect(result).toEqual(cachedModules);
+      expect(logSpy).not.toHaveBeenCalled();
     });
   });
 });

@@ -83,16 +83,13 @@ export const writeToCache = (content, delay = 500) => {
 export const removeDuplicatedModules = (url, cachedModules, moduleNames) => {
   const matchingModule = moduleNames.find((moduleName) => url.match(new RegExp(`\\b\\/${moduleName}\\/\\b`)));
 
-  if (!matchingModule) return cachedModules;
-
-  const updatedCachedModules = Object.keys(cachedModules).reduce((acc, cachedModuleKey) => {
+  const updatedCachedModules = cachedModules;
+  Object.keys(updatedCachedModules).forEach((cachedModuleKey) => {
     if (cachedModuleKey.match(new RegExp(`\\b\\/${matchingModule}\\/\\b`))) {
+      delete updatedCachedModules[cachedModuleKey];
       console.log(`Deleted ${cachedModuleKey} from cache`);
-    } else {
-      acc[cachedModuleKey] = cachedModules[cachedModuleKey];
     }
-    return acc;
-  }, {});
+  });
   return updatedCachedModules;
 };
 
