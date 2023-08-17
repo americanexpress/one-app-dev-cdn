@@ -1,3 +1,10 @@
+# [3.4.0](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.3.2...v3.4.0) (2023-08-17)
+
+
+### Features
+
+* **cache-module:** implemented cache ([#48](https://github.com/americanexpress/one-app-dev-cdn/issues/48)) ([0a28d4d](https://github.com/americanexpress/one-app-dev-cdn/commit/0a28d4de411bf4dd48718517136c565d1325f336))
+
 ## [3.3.2](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.3.1...v3.3.2) (2021-11-30)
 
 
