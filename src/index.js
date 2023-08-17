@@ -24,6 +24,10 @@ import compression from 'compression';
 import cors from 'cors';
 import ip from 'ip';
 import ProxyAgent from 'proxy-agent';
+import { getCachedModules, writeToCache, removeDuplicatedModules } from './util';
+
+let moduleNames = [];
+const cachedModules = getCachedModules();
 
 const getLocalModuleMap = ({ pathToModuleMap, oneAppDevCdnAddress }) => {
   const moduleMap = JSON.parse(fs.readFileSync(pathToModuleMap, 'utf8').toString());
@@ -153,7 +157,7 @@ const oneAppDevCdnFactory = ({
             ...localMap.modules,
           },
         };
-
+        moduleNames = Object.keys(map.modules);
         response
           .status(200)
           .send(map);
@@ -163,6 +167,7 @@ const oneAppDevCdnFactory = ({
   // for locally served modules
   oneAppDevCdn.use('/modules', express.static(`${localDevPublicPath}/modules`));
 
+  // eslint-disable-next-line consistent-return -- not needed
   oneAppDevCdn.get('*', (req, res) => {
     const incomingRequestPath = req.path;
 
@@ -172,6 +177,14 @@ const oneAppDevCdnFactory = ({
         remoteModuleBaseUrls
       );
       const remoteModuleBaseUrlOrigin = new URL(knownRemoteModuleBaseUrl).origin;
+
+      if (cachedModules[incomingRequestPath]) {
+        return res
+          .status(200)
+          .type(path.extname(incomingRequestPath))
+          .send(cachedModules[incomingRequestPath]);
+      }
+
       got(`${remoteModuleBaseUrlOrigin}/${req.path}`, {
         headers: { connection: 'keep-alive' },
         agent: {
@@ -179,10 +192,19 @@ const oneAppDevCdnFactory = ({
           http: new ProxyAgent(),
         },
       })
-        .then((remoteModuleResponse) => res
-          .status(res.statusCode)
-          .type(path.extname(req.path))
-          .send(remoteModuleResponse.body))
+        .then((remoteModuleResponse) => {
+          const updatedCachedModules = removeDuplicatedModules(
+            incomingRequestPath,
+            cachedModules,
+            moduleNames
+          );
+          updatedCachedModules[incomingRequestPath] = remoteModuleResponse.body;
+          writeToCache(updatedCachedModules);
+          return res
+            .status(res.statusCode)
+            .type(path.extname(req.path))
+            .send(remoteModuleResponse.body);
+        })
         .catch((err) => {
           const status = err.code === 'ERR_NON_2XX_3XX_RESPONSE' ? err.response.statusCode : 500;
           return res
