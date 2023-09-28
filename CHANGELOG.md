@@ -1,3 +1,10 @@
+## [3.4.1](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.4.0...v3.4.1) (2023-09-28)
+
+
+### Bug Fixes
+
+* **cache-modules:** stringify object ([#51](https://github.com/americanexpress/one-app-dev-cdn/issues/51)) ([fd2cb78](https://github.com/americanexpress/one-app-dev-cdn/commit/fd2cb78b266294ff71af0c4e242e38b8e7780a34))
+
 # [3.4.0](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.3.2...v3.4.0) (2023-08-17)
 
 
