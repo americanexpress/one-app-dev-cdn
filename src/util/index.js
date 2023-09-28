@@ -36,7 +36,7 @@ export const setupCacheFile = () => {
       console.log(`Successfully created ${oneAppDirectoryPath}`);
       console.log(`Creating ${cacheFileName}`);
       try {
-        fs.writeFileSync(oneAppModuleCachePath, JSON.stringify('{}'));
+        fs.writeFileSync(oneAppModuleCachePath, JSON.stringify({}));
         console.log(`${cacheFileName} created successfully on ${oneAppModuleCachePath}`);
       } catch (err) {
         console.error(`Error creating ${cacheFileName} on ${oneAppModuleCachePath}, \n${err}`);
