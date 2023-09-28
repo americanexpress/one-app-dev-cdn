@@ -83,7 +83,7 @@ describe('Cache module utils', () => {
       fs.writeFileSync.mockImplementationOnce(() => ({}));
 
       setupCacheFile();
-
+      expect(fs.writeFileSync).toHaveBeenCalledWith(oneAppModuleCachePath, JSON.stringify({}));
       expect(logSpy).toHaveBeenCalledWith(`Successfully created ${oneAppDirectoryPath}`);
       expect(logSpy).toHaveBeenCalledWith(`Creating ${cacheFileName}`);
       expect(logSpy).toHaveBeenCalledWith(`${cacheFileName} created successfully on ${oneAppModuleCachePath}`);
