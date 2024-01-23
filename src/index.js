@@ -23,7 +23,7 @@ import got from 'got';
 import compression from 'compression';
 import cors from 'cors';
 import ip from 'ip';
-import { ProxyAgent } from 'proxy-agent';
+import ProxyAgent from 'proxy-agent';
 import { getCachedModules, writeToCache, removeDuplicatedModules } from './util';
 
 let moduleNames = [];
