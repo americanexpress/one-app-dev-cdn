@@ -23,7 +23,7 @@ import path from 'path';
 import mkdirp from 'mkdirp';
 import ProxyAgent from 'proxy-agent';
 import oneAppDevCdn from '../src';
-import { removeDuplicatedModules } from '../src/util';
+import { removeExistingEntryIfConflicting } from '../src/util';
 
 const pathToStubs = path.join(__dirname, 'stubs');
 const pathToCache = path.join(__dirname, '..', '.cache');
@@ -31,11 +31,11 @@ const mockLocalDevPublicPath = path.join(pathToStubs, 'public');
 
 jest.mock('got');
 jest.mock('../src/util', () => ({
-  getCachedModules: jest.fn(() => ({
+  getCachedModuleFiles: () => ({
     '/cdn/module-b/1.0.0/module-c.node.js': 'console.log("c");',
-  })),
+  }),
   writeToCache: jest.fn(() => ({})),
-  removeDuplicatedModules: jest.fn(() => ({})),
+  removeExistingEntryIfConflicting: jest.fn((_, cachedModuleFiles) => cachedModuleFiles),
 }));
 
 const origNodeEnv = process.env.NODE_ENV;
@@ -145,7 +145,9 @@ describe('one-app-dev-cdn', () => {
     jest
       .resetAllMocks()
       .resetModules();
-    removeDuplicatedModules.mockImplementation(() => ({}));
+    removeExistingEntryIfConflicting.mockImplementation(
+      (_, cachedModuleFiles) => cachedModuleFiles
+    );
     got.mockImplementation((url) => Promise.reject(new Error(`no mock for ${url} set up`)));
   });
 
@@ -587,7 +589,57 @@ describe('one-app-dev-cdn', () => {
           },
         ],
         [
-          'https://example.com//cdn/module-b/1.0.0/module-b.node.js',
+          'https://example.com/cdn/module-b/1.0.0/module-b.node.js',
+          {
+            agent: {
+              http: expect.any(ProxyAgent),
+              https: expect.any(ProxyAgent),
+            },
+            headers: {
+              connection: 'keep-alive',
+            },
+          },
+        ],
+      ]);
+    });
+
+    it('gets remote modules with a 301 status code', async () => {
+      expect.assertions(7);
+
+      const fcdn = setupTest({
+        useLocalModules: false,
+        appPort: 3000,
+        remoteModuleMapUrl: 'https://example.com/module-map.json',
+      });
+      got.mockReturnJsonOnce(defaultRemoteMap);
+      got.mockReturnFileOnce('console.log("a");', 301);
+
+      const moduleMapResponse = await supertest(fcdn)
+        .get('/module-map.json');
+
+      expect(moduleMapResponse.status).toBe(200);
+      expect(moduleMapResponse.header['content-type']).toMatch(/^application\/json/);
+      expect(
+        sanitizeModuleMapForSnapshot(moduleMapResponse.text)
+      ).toMatchSnapshot('module map response');
+
+      const moduleResponse = await supertest(fcdn)
+        .get('/cdn/module-b/1.0.0/module-b.node.js?key="123');
+
+      expect(moduleResponse.status).toBe(301);
+      expect(moduleResponse.header['content-type']).toMatch(/^application\/javascript/);
+      expect(moduleResponse.text).toBe('console.log("a");');
+      expect(got.mock.calls).toEqual([
+        [
+          'https://example.com/module-map.json',
+          {
+            agent: {
+              http: expect.any(ProxyAgent),
+              https: expect.any(ProxyAgent),
+            },
+          },
+        ], [
+          'https://example.com/cdn/module-b/1.0.0/module-b.node.js',
           {
             agent: {
               http: expect.any(ProxyAgent),
