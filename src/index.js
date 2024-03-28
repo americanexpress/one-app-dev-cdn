@@ -24,10 +24,7 @@ import compression from 'compression';
 import cors from 'cors';
 import ip from 'ip';
 import ProxyAgent from 'proxy-agent';
-import { getCachedModules, writeToCache, removeDuplicatedModules } from './util';
-
-let moduleNames = [];
-const cachedModules = getCachedModules();
+import { getCachedModuleFiles, writeToCache, removeExistingEntryIfConflicting } from './util';
 
 const getLocalModuleMap = ({ pathToModuleMap, oneAppDevCdnAddress }) => {
   const moduleMap = JSON.parse(fs.readFileSync(pathToModuleMap, 'utf8').toString());
@@ -57,6 +54,8 @@ const oneAppDevCdnFactory = ({
   appPort,
   useHost,
 }) => {
+  let cachedModuleFiles = getCachedModuleFiles();
+
   if (!remoteModuleMapUrl && !useLocalModules) {
     throw new Error('remoteModuleMapUrl is a required param when useLocalModules is not true');
   }
@@ -157,7 +156,6 @@ const oneAppDevCdnFactory = ({
             ...localMap.modules,
           },
         };
-        moduleNames = Object.keys(map.modules);
         response
           .status(200)
           .send(map);
@@ -171,21 +169,21 @@ const oneAppDevCdnFactory = ({
   oneAppDevCdn.get('*', (req, res) => {
     const incomingRequestPath = req.path;
 
-    if (matchPathToKnownRemoteModuleUrl(incomingRequestPath, remoteModuleBaseUrls)) {
-      const knownRemoteModuleBaseUrl = matchPathToKnownRemoteModuleUrl(
-        incomingRequestPath,
-        remoteModuleBaseUrls
-      );
+    const knownRemoteModuleBaseUrl = matchPathToKnownRemoteModuleUrl(
+      incomingRequestPath,
+      remoteModuleBaseUrls
+    );
+    if (knownRemoteModuleBaseUrl) {
       const remoteModuleBaseUrlOrigin = new URL(knownRemoteModuleBaseUrl).origin;
 
-      if (cachedModules[incomingRequestPath]) {
+      if (cachedModuleFiles[incomingRequestPath]) {
         return res
           .status(200)
           .type(path.extname(incomingRequestPath))
-          .send(cachedModules[incomingRequestPath]);
+          .send(cachedModuleFiles[incomingRequestPath]);
       }
 
-      got(`${remoteModuleBaseUrlOrigin}/${req.path}`, {
+      got(`${remoteModuleBaseUrlOrigin}${req.path}`, {
         headers: { connection: 'keep-alive' },
         agent: {
           https: new ProxyAgent(),
@@ -193,15 +191,17 @@ const oneAppDevCdnFactory = ({
         },
       })
         .then((remoteModuleResponse) => {
-          const updatedCachedModules = removeDuplicatedModules(
-            incomingRequestPath,
-            cachedModules,
-            moduleNames
-          );
-          updatedCachedModules[incomingRequestPath] = remoteModuleResponse.body;
-          writeToCache(updatedCachedModules);
+          if (remoteModuleResponse.statusCode === 200) {
+            cachedModuleFiles = removeExistingEntryIfConflicting(
+              incomingRequestPath,
+              cachedModuleFiles
+            );
+            cachedModuleFiles[incomingRequestPath] = remoteModuleResponse.body;
+            writeToCache(cachedModuleFiles);
+          }
+
           return res
-            .status(res.statusCode)
+            .status(remoteModuleResponse.statusCode)
             .type(path.extname(req.path))
             .send(remoteModuleResponse.body);
         })

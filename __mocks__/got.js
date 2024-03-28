@@ -14,20 +14,20 @@
 
 const got = jest.createMockFromModule('got');
 
-got.mockReturnJsonOnce = (obj) => {
+got.mockReturnJsonOnce = (obj, statusCode = 200) => {
   if (obj instanceof Error) {
-    return got.mockImplementationOnce(() => Promise.reject(obj));
+    got.mockImplementationOnce(() => Promise.reject(obj));
   }
 
-  return got.mockImplementationOnce(() => Promise.resolve({ body: JSON.stringify(obj) }));
+  got.mockImplementationOnce(() => Promise.resolve({ body: JSON.stringify(obj), statusCode }));
 };
 
-got.mockReturnFileOnce = (body) => {
+got.mockReturnFileOnce = (body, statusCode = 200) => {
   if (body instanceof Error) {
-    return got.mockImplementationOnce(() => Promise.reject(body));
+    got.mockImplementationOnce(() => Promise.reject(body));
   }
 
-  return got.mockImplementationOnce(() => Promise.resolve({ body }));
+  got.mockImplementationOnce(() => Promise.resolve({ body, statusCode }));
 };
 
 export default got;
