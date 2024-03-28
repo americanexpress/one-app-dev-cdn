@@ -1,3 +1,15 @@
+# [3.6.0](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.5.0...v3.6.0) (2024-03-28)
+
+
+### Features
+
+* **backports:** backports from ([#57](https://github.com/americanexpress/one-app-dev-cdn/issues/57)) ([a2a5e5f](https://github.com/americanexpress/one-app-dev-cdn/commit/a2a5e5fb24fd3287ee77e10d0c92ea372cba7359))
+
+
+### Reverts
+
+* **proxyagent:** revert proxy agent change ([#55](https://github.com/americanexpress/one-app-dev-cdn/issues/55)) ([203da3d](https://github.com/americanexpress/one-app-dev-cdn/commit/203da3ddc4b8d7d87361bfb6f174574f96d74435))
+
 # [3.5.0](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.4.1...v3.5.0) (2024-01-17)
 
 
