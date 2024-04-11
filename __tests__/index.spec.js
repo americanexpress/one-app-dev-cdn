@@ -21,7 +21,7 @@ import rimraf from 'rimraf';
 import fs from 'fs';
 import path from 'path';
 import mkdirp from 'mkdirp';
-import ProxyAgent from 'proxy-agent';
+import { ProxyAgent } from 'proxy-agent';
 import oneAppDevCdn from '../src';
 import { removeExistingEntryIfConflicting } from '../src/util';
 
