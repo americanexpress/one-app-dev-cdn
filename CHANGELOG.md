@@ -1,3 +1,10 @@
+## [3.6.1](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.6.0...v3.6.1) (2024-04-11)
+
+
+### Bug Fixes
+
+* **security:** update to proxy-agent@6 ([#59](https://github.com/americanexpress/one-app-dev-cdn/issues/59)) ([e063e73](https://github.com/americanexpress/one-app-dev-cdn/commit/e063e735b732fdf43f7bf181bade6ee3eef3fed3))
+
 # [3.6.0](https://github.com/americanexpress/one-app-dev-cdn/compare/v3.5.0...v3.6.0) (2024-03-28)
 
 
