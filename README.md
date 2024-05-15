@@ -1,18 +1,16 @@
 <h1 align="center">
+
+  
+  [One App is now InnerSource](https://github.com/americanexpress/one-app/issues/1393)
+
+  <hr/>
+
   <img src='https://github.com/americanexpress/one-app-dev-cdn/raw/main/one-app-dev-cdn.png' alt="One App Dev Proxy - One Amex" width='50%'/>
 </h1>
 
 [![npm](https://img.shields.io/npm/v/@americanexpress/one-app-dev-cdn)](https://www.npmjs.com/package/@americanexpress/one-app-dev-cdn)
-![Tests](https://github.com/americanexpress/one-app-dev-cdn/workflows/Tests/badge.svg)
 
 > Building a local module and you want to load it? This supports loading of your remote and local modules together for local development.
-
-
-## 👩‍💻 Hiring 👨‍💻
-
-Want to get paid for your contributions to `one-app-dev-cdn`?
-> Send your resume to oneamex.careers@aexp.com
-
 
 ## 📖 Table of Contents
 
